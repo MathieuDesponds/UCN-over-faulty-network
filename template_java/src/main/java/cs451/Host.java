@@ -80,7 +80,8 @@ public class Host {
     }
     private void writeOutput(){
         try {
-            FileWriter writer = new FileWriter("C:/Users/mathi/Documents/EPFL Master/DA/CS451-2021-project/example/output/"+this.id+".output");
+            //FileWriter writer = new FileWriter("C:/Users/mathi/Documents/EPFL Master/DA/CS451-2021-project/example/output/"+this.id+".output");
+            FileWriter writer = new FileWriter("./../example/output/"+this.id+".output");
             for(String s : output){
                 writer.write(s+"\n");
             }
