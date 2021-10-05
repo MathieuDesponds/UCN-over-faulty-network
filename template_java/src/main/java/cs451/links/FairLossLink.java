@@ -48,4 +48,9 @@ public class FairLossLink extends Link {
         catch(UnknownHostException e){}
         catch(IOException e){}
     }
+
+    @Override
+    public void close() {
+        socket.close();
+    }
 }

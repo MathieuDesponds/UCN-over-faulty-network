@@ -2,8 +2,12 @@ package cs451;
 
 import cs451.links.FairLossLink;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Host {
 
@@ -13,6 +17,7 @@ public class Host {
     private String ip;
     private int port = -1;
     private FairLossLink fll;
+    private List<String> output;
 
     public boolean populate(String idString, String ipString, String portString) {
         try {
@@ -41,7 +46,7 @@ public class Host {
             e.printStackTrace();
         }
         fll = new FairLossLink(ip, port);
-
+        output = new ArrayList<>();
         return true;
     }
 
@@ -60,11 +65,29 @@ public class Host {
     public void send(Message m){
         System.out.println("Host "+this.id +" sending a message to "+ m.getDstPort() );
         fll.send(m);
+        output.add("b "+m.getSeqNumber());
     }
 
     public void receive(){
         Message m = fll.deliver();
         System.out.println("Host "+this.id +" received message from "+m.getDstPort()+" "+m.getPayload());
+        output.add("d "+m.getSrcPort()+" "+m.getSeqNumber());
+    }
+
+    public void close(){
+        writeOutput();
+        fll.close();
+    }
+    private void writeOutput(){
+        try {
+            FileWriter writer = new FileWriter("C:/Users/mathi/Documents/EPFL Master/DA/CS451-2021-project/example/output/"+this.id+".output");
+            for(String s : output){
+                writer.write(s+"\n");
+            }
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }
