@@ -58,6 +58,16 @@ public class Main {
 
         System.out.println("Broadcasting and delivering messages...\n");
 
+        //Configuration with 2 hosts trying to send and receive messages
+        Host h1 = parser.hosts().get(0);
+        Host h2 = parser.hosts().get(1);
+        Message m = new Message(h1.getIp(),h1.getPort(), h2.getIp(), h2.getPort(), 0, "AA");
+
+        h1.send(m);
+        h2.receive();
+
+
+
         // After a process finishes broadcasting,
         // it waits forever for the delivery of messages.
         while (true) {

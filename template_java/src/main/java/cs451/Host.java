@@ -1,5 +1,7 @@
 package cs451;
 
+import cs451.links.FairLossLink;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -10,6 +12,7 @@ public class Host {
     private int id;
     private String ip;
     private int port = -1;
+    private FairLossLink fll;
 
     public boolean populate(String idString, String ipString, String portString) {
         try {
@@ -37,6 +40,7 @@ public class Host {
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
+        fll = new FairLossLink(ip, port);
 
         return true;
     }
@@ -51,6 +55,16 @@ public class Host {
 
     public int getPort() {
         return port;
+    }
+
+    public void send(Message m){
+        System.out.println("Host "+this.id +" sending a message to "+ m.getDstPort() );
+        fll.send(m);
+    }
+
+    public void receive(){
+        Message m = fll.deliver();
+        System.out.println("Host "+this.id +" received message from "+m.getDstPort()+" "+m.getPayload());
     }
 
 }
