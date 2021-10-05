@@ -3,21 +3,23 @@ package cs451;
 import java.util.Arrays;
 
 public class Message {
-    private int srcIP; private int srcPort;
-    private int dstIP; private int dstPort;
+    private String srcIP;
+    private int srcPort;
+    private String dstIP;
+    private int dstPort;
     private int seqNumber;
-    private byte[] payload;
+    private String payload;
 
-    public Message(int srcIP, int srcPort, int dstIP, int dstPort, int seqNumber, byte[] payload){
+    public Message(String srcIP, int srcPort, String dstIP, int dstPort, int seqNumber, String payload){
         this.srcIP = srcIP;
         this.srcPort = srcPort;
         this.dstIP = dstIP;
         this.dstPort = dstPort;
         this.seqNumber = seqNumber;
-        this.payload = Arrays.copyOf(payload,payload.length);
+        this.payload = payload;
     }
 
-    public int getSrcIP() {
+    public String getSrcIP() {
         return srcIP;
     }
 
@@ -25,7 +27,7 @@ public class Message {
         return srcPort;
     }
 
-    public int getDstIP() {
+    public String getDstIP() {
         return dstIP;
     }
 
@@ -37,7 +39,7 @@ public class Message {
         return seqNumber;
     }
 
-    public byte[] getPayload() {
+    public String getPayload() {
         return payload;
     }
 }
