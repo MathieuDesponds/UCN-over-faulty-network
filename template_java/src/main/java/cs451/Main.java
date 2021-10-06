@@ -11,7 +11,7 @@ import java.net.SocketTimeoutException;
 public class Main {
     private static OutputWriter ow;
     private static FairLossLink fll;
-    private static final int TIMEOUT = 1000;
+    private static final int TIMEOUT = 8000;
     private static void handleSignal() {
         //immediately stop network packet processing
         System.out.println("Immediately stopping network packet processing.");
@@ -62,13 +62,14 @@ public class Main {
         System.out.println("Doing some initialization\n");
 
         Host hostToSend = getHostToSendTo(parser);
+        Host me = getMe(parser);
         System.out.println("Broadcasting and delivering messages...\n");
 
         //See if we are the host to send to
         if(parser.myId() == hostToSend.getId()){
             receiver(hostToSend);
         }else{
-            sender(parser.configNbMessage(), hostToSend);
+            sender(me, parser.configNbMessage(), hostToSend);
         }
 
         close();
@@ -86,21 +87,24 @@ public class Main {
         ow.write();
     }
 
-    private static void receiver(Host hostToSend) {
-        fll = new FairLossLink(hostToSend.getIp(), hostToSend.getPort(),TIMEOUT);
+    private static void receiver(Host me) {
+        fll = new FairLossLink(me.getIp(), me.getPort(),TIMEOUT);
+        System.out.println(me.getIp()+" "+me.getPort());
         Message m;
         try{
             while(true){
                 m = fll.deliver();
                 ow.addReceive(m);
+                System.out.println("Received");
             }
         }catch(SocketTimeoutException e){
             System.out.println("Timeout");
         }
     }
 
-    private static void sender(int configNbMessage, Host hostToSend) {
-        fll= new FairLossLink(hostToSend.getIp(), hostToSend.getPort());;
+    private static void sender(Host me, int configNbMessage, Host hostToSend) {
+        fll= new FairLossLink(me.getIp(), me.getPort());
+        System.out.println(me.getIp()+" "+me.getPort());
         for(int i = 0; i<configNbMessage; ++i){
             Message m = new Message(hostToSend.getIp(),hostToSend.getPort(),i,"AAAA"+i);
             fll.send(m);
@@ -112,6 +116,14 @@ public class Main {
         int idToSend = parser.configIdToSend();
         for(Host h : parser.hosts()){
             if(h.getId()==idToSend)
+                return h;
+        }
+        return null;
+    }
+    private static Host getMe(Parser parser) {
+        int myId = parser.myId();
+        for(Host h : parser.hosts()){
+            if(h.getId()==myId)
                 return h;
         }
         return null;
