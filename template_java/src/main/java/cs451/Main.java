@@ -56,11 +56,19 @@ public class Main {
 
         System.out.println("Doing some initialization\n");
 
+        if(parser.myId() == parser.config().getIdToSend()){
+
+        }else{
+
+        }
+
         System.out.println("Broadcasting and delivering messages...\n");
 
+        //See if we are the host to send to
+        //
 
         //Configuration with 2 hosts trying to send and receive messages
-        Host h1 = parser.hosts().get(0);
+        /*Host h1 = parser.hosts().get(0);
         Host h2 = parser.hosts().get(1);
         Message m = new Message(h1.getIp(),h1.getPort(), h2.getIp(), h2.getPort(), 0, "AA");
         Message m2 = new Message( h2.getIp(), h2.getPort(), h1.getIp(),h1.getPort(),0, "BB");
@@ -70,16 +78,9 @@ public class Main {
         h1.receive();
         h1.close();
         h2.close();
+        */
 
 
-
-        /*Host me;
-        for (Host host: parser.hosts()) {
-            if(host.getId()==parser.myId()){
-                me = host;
-                break;
-            }
-        }*/
 
 
         // After a process finishes broadcasting,
