@@ -10,25 +10,30 @@ public class FairLossLink extends Link {
     private String ip;
     private int port;
 
-    public FairLossLink(String ip, int port){
+    public FairLossLink(String ip, int port,int timeout){
         this.ip = ip;
         this.port = port;
         try {
             InetAddress inetAddress = InetAddress.getByName(ip);
             //InetAddress inetAddress = InetAddress.getLocalHost();
             socket = new DatagramSocket(port, inetAddress);
+            socket.setSoTimeout(timeout);
         }
-        catch (UnknownHostException e){}
-        catch (SocketException e) {}
+        catch (UnknownHostException | SocketException e){}
 
+    }
+    public FairLossLink(String ip, int port){
+        this(ip,port,0);
     }
 
     @Override
-    public Message deliver() {
+    public Message deliver() throws SocketTimeoutException {
         byte [] buf = new byte [32];
         DatagramPacket packet = new DatagramPacket(buf, buf.length);
         try {
             socket.receive(packet);
+        } catch (SocketTimeoutException e) {
+            throw e;
         } catch (IOException e) {
             e.printStackTrace();
         }

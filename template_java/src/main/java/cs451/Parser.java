@@ -69,5 +69,11 @@ public class Parser {
     public String config() {
         return configParser.getPath();
     }
+    public int configIdToSend() {
+        return configParser.getIdToSend();
+    }
 
+    public int configNbMessage() {
+        return configParser.getNbMessage();
+    }
 }

@@ -18,6 +18,14 @@ public class Message {
         this.seqNumber = seqNumber;
         this.payload = payload;
     }
+    public Message(String dstIP, int dstPort, int seqNumber, String payload){
+        this.srcIP = "";
+        this.srcPort = -1;
+        this.dstIP = dstIP;
+        this.dstPort = dstPort;
+        this.seqNumber = seqNumber;
+        this.payload = payload;
+    }
 
     public String getSrcIP() {
         return srcIP;

@@ -1,12 +1,17 @@
 package cs451;
 
+import cs451.links.FairLossLink;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 
 public class Main {
-
+    private static OutputWriter ow;
+    private static FairLossLink fll;
+    private static final int TIMEOUT = 1000;
     private static void handleSignal() {
         //immediately stop network packet processing
         System.out.println("Immediately stopping network packet processing.");
@@ -27,7 +32,7 @@ public class Main {
     public static void main(String[] args) throws InterruptedException {
         Parser parser = new Parser(args);
         parser.parse();
-
+        ow= new OutputWriter(parser.output());
         initSignalHandlers();
 
         // example
@@ -56,32 +61,17 @@ public class Main {
 
         System.out.println("Doing some initialization\n");
 
-        if(parser.myId() == parser.config().getIdToSend()){
-
-        }else{
-
-        }
-
+        Host hostToSend = getHostToSendTo(parser);
         System.out.println("Broadcasting and delivering messages...\n");
 
         //See if we are the host to send to
-        //
+        if(parser.myId() == hostToSend.getId()){
+            receiver(hostToSend);
+        }else{
+            sender(parser.configNbMessage(), hostToSend);
+        }
 
-        //Configuration with 2 hosts trying to send and receive messages
-        /*Host h1 = parser.hosts().get(0);
-        Host h2 = parser.hosts().get(1);
-        Message m = new Message(h1.getIp(),h1.getPort(), h2.getIp(), h2.getPort(), 0, "AA");
-        Message m2 = new Message( h2.getIp(), h2.getPort(), h1.getIp(),h1.getPort(),0, "BB");
-        h1.send(m);
-        h2.send(m2);
-        h2.receive();
-        h1.receive();
-        h1.close();
-        h2.close();
-        */
-
-
-
+        close();
 
         // After a process finishes broadcasting,
         // it waits forever for the delivery of messages.
@@ -89,5 +79,41 @@ public class Main {
             // Sleep for 1 hour
             Thread.sleep(60 * 60 * 1000);
         }
+    }
+
+    private static void close() {
+        fll.close();
+        ow.write();
+    }
+
+    private static void receiver(Host hostToSend) {
+        fll = new FairLossLink(hostToSend.getIp(), hostToSend.getPort(),TIMEOUT);
+        Message m;
+        try{
+            while(true){
+                m = fll.deliver();
+                ow.addReceive(m);
+            }
+        }catch(SocketTimeoutException e){
+            System.out.println("Timeout");
+        }
+    }
+
+    private static void sender(int configNbMessage, Host hostToSend) {
+        fll= new FairLossLink(hostToSend.getIp(), hostToSend.getPort());;
+        for(int i = 0; i<configNbMessage; ++i){
+            Message m = new Message(hostToSend.getIp(),hostToSend.getPort(),i,"AAAA"+i);
+            fll.send(m);
+            ow.addBroadcast(m);
+        }
+    }
+
+    private static Host getHostToSendTo(Parser parser) {
+        int idToSend = parser.configIdToSend();
+        for(Host h : parser.hosts()){
+            if(h.getId()==idToSend)
+                return h;
+        }
+        return null;
     }
 }
