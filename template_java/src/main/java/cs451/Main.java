@@ -67,7 +67,7 @@ public class Main {
 
         //See if we are the host to send to
         if(parser.myId() == hostToSend.getId()){
-            receiver(hostToSend);
+            receiver(me);
         }else{
             sender(me, parser.configNbMessage(), hostToSend);
         }
