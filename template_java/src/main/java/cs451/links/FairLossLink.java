@@ -1,20 +1,23 @@
 package cs451.links;
 
 import cs451.Message;
+import cs451.OutputWriter;
 
 import java.io.IOException;
 import java.net.*;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.List;
 
 public class FairLossLink extends Link {
+    private static OutputWriter ow;
     private final int HEADER_SIZE = 1 * 4; //int a 4 times bigger than bytes
     private final int MAX_SIZE_PACKET = 32;
     private DatagramSocket socket;
     private String ip;
     private int port;
 
-    public FairLossLink(String ip, int port,int timeout){
+    public FairLossLink(String ip, int port,int timeout, String output){
         this.ip = ip;
         this.port = port;
         try {
@@ -24,10 +27,10 @@ public class FairLossLink extends Link {
             socket.setSoTimeout(timeout);
         }
         catch (UnknownHostException | SocketException e){}
-
+        ow= new OutputWriter(output);
     }
-    public FairLossLink(String ip, int port){
-        this(ip,port,0);
+    public FairLossLink(String ip, int port, String output){
+        this(ip,port,0, output);
     }
 
     @Override
@@ -44,27 +47,32 @@ public class FairLossLink extends Link {
         String payload = new String(packet.getData(), 1, packet.getLength());
         Message m = new Message(packet.getAddress().getHostName(), packet.getPort(), ip, port,
                 ByteBuffer.wrap(Arrays.copyOfRange(packet.getData(),0,HEADER_SIZE)).getInt(), payload);
+        ow.addReceive(m);
         return m;
     }
 
     @Override
-    public void send(Message m) {
-        byte [] head = ByteBuffer.allocate(HEADER_SIZE).putInt(m.getSeqNumber()).array();
-        byte [] buf = m.getPayload().getBytes();
-        byte [] result = concat(head, buf);
+    public void send(List<Message> lm) {
+        for(Message m : lm) {
+            byte[] head = ByteBuffer.allocate(HEADER_SIZE).putInt(m.getSeqNumber()).array();
+            byte[] buf = m.getPayload().getBytes();
+            byte[] result = concat(head, buf);
 
-        try{
-            DatagramPacket packet
-                    = new DatagramPacket(result, result.length, InetAddress.getByName(m.getDstIP()), m.getDstPort());
-            socket.send(packet);
+            try {
+                DatagramPacket packet
+                        = new DatagramPacket(result, result.length, InetAddress.getByName(m.getDstIP()), m.getDstPort());
+                socket.send(packet);
+                ow.addBroadcast(m);
+            } catch (UnknownHostException e) {
+            } catch (IOException e) {
+            }
         }
-        catch(UnknownHostException e){}
-        catch(IOException e){}
     }
 
     @Override
     public void close() {
         socket.close();
+        ow.write();
     }
 
     static byte[] concat(byte[] a1, byte[] a2) {

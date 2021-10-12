@@ -7,9 +7,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main {
-    private static OutputWriter ow;
+    private static Parser parser;
     private static FairLossLink fll;
     private static final int TIMEOUT = 8000;
     private static void handleSignal() {
@@ -32,7 +34,6 @@ public class Main {
     public static void main(String[] args) throws InterruptedException {
         Parser parser = new Parser(args);
         parser.parse();
-        ow= new OutputWriter(parser.output());
         initSignalHandlers();
 
         // example
@@ -61,15 +62,17 @@ public class Main {
 
         System.out.println("Doing some initialization\n");
 
-        Host hostToSend = getHostToSendTo(parser);
-        Host me = getMe(parser);
+        Host hostToSend = getHostToSendTo();
+        Host me = getMe();
+        fll = new FairLossLink(me.getIp(), me.getPort(),TIMEOUT, parser.output());
+
         System.out.println("Broadcasting and delivering messages...\n");
 
         //See if we are the host to send to
         if(parser.myId() == hostToSend.getId()){
-            receiver(me);
+            receiver();
         }else{
-            sender(me, parser.configNbMessage(), hostToSend);
+            sender(parser.configNbMessage(), hostToSend);
         }
 
         close();
@@ -84,17 +87,13 @@ public class Main {
 
     private static void close() {
         fll.close();
-        ow.write();
     }
 
-    private static void receiver(Host me) {
-        fll = new FairLossLink(me.getIp(), me.getPort(),TIMEOUT);
-        System.out.println(me.getIp()+" "+me.getPort());
+    private static void receiver() {
         Message m;
         try{
             while(true){
                 m = fll.deliver();
-                ow.addReceive(m);
                 System.out.println("Received");
             }
         }catch(SocketTimeoutException e){
@@ -102,17 +101,17 @@ public class Main {
         }
     }
 
-    private static void sender(Host me, int configNbMessage, Host hostToSend) {
-        fll= new FairLossLink(me.getIp(), me.getPort());
-        System.out.println(me.getIp()+" "+me.getPort());
-        for(int i = 0; i<configNbMessage; ++i){
-            Message m = new Message(hostToSend.getIp(),hostToSend.getPort(),i,"AAAA"+i);
-            fll.send(m);
-            ow.addBroadcast(m);
+    private static void sender(int configNbMessage, Host hostToSend) {
+        //Preparation of the sended messages
+        List<Message> lm = new ArrayList<Message>();
+        for(int i = 0; i<configNbMessage; ++i) {
+            lm.add(new Message(hostToSend.getIp(), hostToSend.getPort(), i, "AAAA" + i));
         }
+        //Sending messages
+        fll.send(lm);
     }
 
-    private static Host getHostToSendTo(Parser parser) {
+    private static Host getHostToSendTo() {
         int idToSend = parser.configIdToSend();
         for(Host h : parser.hosts()){
             if(h.getId()==idToSend)
@@ -120,7 +119,7 @@ public class Main {
         }
         return null;
     }
-    private static Host getMe(Parser parser) {
+    private static Host getMe() {
         int myId = parser.myId();
         for(Host h : parser.hosts()){
             if(h.getId()==myId)
