@@ -61,6 +61,7 @@ public class FairLossLink extends Link {
             try {
                 DatagramPacket packet
                         = new DatagramPacket(result, result.length, InetAddress.getByName(m.getDstIP()), m.getDstPort());
+                System.out.println("send pkt "+m.getSeqNumber());
                 socket.send(packet);
                 ow.addBroadcast(m);
             } catch (UnknownHostException e) {

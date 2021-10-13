@@ -1,6 +1,8 @@
 package cs451;
 
 import cs451.links.FairLossLink;
+import cs451.links.Link;
+import cs451.links.PerfectLink;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,12 +14,12 @@ import java.util.List;
 
 public class Main {
     private static Parser parser;
-    private static FairLossLink fll;
-    private static final int TIMEOUT = 8000;
+    private static Link link;            ;
+    private static final int TIMEOUT = 8000; //TOdo remove it
     private static void handleSignal() {
         //immediately stop network packet processing
         System.out.println("Immediately stopping network packet processing.");
-
+        close();
         //write/flush output file if necessary
         System.out.println("Writing output.");
     }
@@ -32,7 +34,7 @@ public class Main {
     }
 
     public static void main(String[] args) throws InterruptedException {
-        Parser parser = new Parser(args);
+        parser = new Parser(args);
         parser.parse();
         initSignalHandlers();
 
@@ -64,7 +66,9 @@ public class Main {
 
         Host hostToSend = getHostToSendTo();
         Host me = getMe();
-        fll = new FairLossLink(me.getIp(), me.getPort(),TIMEOUT, parser.output());
+
+        // Tell what is the link
+        link = new PerfectLink(me.getIp(), me.getPort(), parser.output());
 
         System.out.println("Broadcasting and delivering messages...\n");
 
@@ -86,15 +90,14 @@ public class Main {
     }
 
     private static void close() {
-        fll.close();
+        link.close();
     }
 
     private static void receiver() {
         Message m;
         try{
             while(true){
-                m = fll.deliver();
-                System.out.println("Received");
+                m = link.deliver();
             }
         }catch(SocketTimeoutException e){
             System.out.println("Timeout");
@@ -108,7 +111,7 @@ public class Main {
             lm.add(new Message(hostToSend.getIp(), hostToSend.getPort(), i, "AAAA" + i));
         }
         //Sending messages
-        fll.send(lm);
+        link.send(lm);
     }
 
     private static Host getHostToSendTo() {

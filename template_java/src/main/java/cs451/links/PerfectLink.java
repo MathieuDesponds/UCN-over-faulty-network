@@ -13,7 +13,8 @@ import java.util.stream.Collectors;
 public class PerfectLink extends Link{
     private FairLossLink fll;
     private int waitingFor = 0; //for receiver
-    private final int TIMEOUT = 8000;
+    private final int TIMEOUT = 5000;
+    private final int WINDOW = 2;
 
     public PerfectLink(String ip, int port, String output){
         fll = new FairLossLink(ip,port,TIMEOUT, output);
@@ -22,10 +23,29 @@ public class PerfectLink extends Link{
     public Message deliver() throws SocketTimeoutException {
         Message m = fll.deliver();
         Message ack = new Message(m.getSrcIP(), m.getSrcPort(), m.getSeqNumber(),"");
+        System.out.print("ack "+m.getSeqNumber());
         fll.send(List.of(ack));
         return m;
     }
 
+//    @Override
+//    public void send(List<Message> lm) {
+//        fll.send(lm.subList(0,Math.max(WINDOW, lm.size())));
+//        HashSet<Integer> hs = new HashSet<Integer>(lm.stream().map(m -> m.getSeqNumber()).collect(Collectors.toSet()));
+//        Message m;
+//        int ackArrived = 0;
+//        try{
+//            while(ackArrived < WINDOW){
+//                m = fll.deliver();
+//                hs.remove(m.getSeqNumber());
+//                ackArrived ++;
+//            }
+//        }catch(SocketTimeoutException e) {
+//
+//        }finally{
+//            send(hs.stream().map(i -> lm.get(i)).collect(Collectors.toList()));
+//        }
+//    }
     @Override
     public void send(List<Message> lm) {
         fll.send(lm);
@@ -37,7 +57,8 @@ public class PerfectLink extends Link{
                 hs.remove(m.getSeqNumber());
             }
         }catch(SocketTimeoutException e) {
-            System.out.println("Timeout");
+
+        }finally{
             send(hs.stream().map(i -> lm.get(i)).collect(Collectors.toList()));
         }
     }
