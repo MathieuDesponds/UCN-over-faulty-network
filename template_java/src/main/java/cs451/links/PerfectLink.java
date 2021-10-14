@@ -27,25 +27,7 @@ public class PerfectLink extends Link{
         fll.send(List.of(ack));
         return m;
     }
-
-//    @Override
-//    public void send(List<Message> lm) {
-//        fll.send(lm.subList(0,Math.max(WINDOW, lm.size())));
-//        HashSet<Integer> hs = new HashSet<Integer>(lm.stream().map(m -> m.getSeqNumber()).collect(Collectors.toSet()));
-//        Message m;
-//        int ackArrived = 0;
-//        try{
-//            while(ackArrived < WINDOW){
-//                m = fll.deliver();
-//                hs.remove(m.getSeqNumber());
-//                ackArrived ++;
-//            }
-//        }catch(SocketTimeoutException e) {
-//
-//        }finally{
-//            send(hs.stream().map(i -> lm.get(i)).collect(Collectors.toList()));
-//        }
-//    }
+    
     @Override
     public void send(List<Message> lm) {
         fll.send(lm);
