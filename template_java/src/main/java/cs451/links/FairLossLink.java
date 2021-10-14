@@ -1,7 +1,6 @@
 package cs451.links;
 
 import cs451.Message;
-import cs451.OutputWriter;
 
 import java.io.IOException;
 import java.net.*;
@@ -10,14 +9,13 @@ import java.util.Arrays;
 import java.util.List;
 
 public class FairLossLink extends Link {
-    private static OutputWriter ow;
     private final int HEADER_SIZE = 1 * 4; //int a 4 times bigger than bytes
     private final int MAX_SIZE_PACKET = 32;
     private DatagramSocket socket;
     private String ip;
     private int port;
 
-    public FairLossLink(String ip, int port,int timeout, String output){
+    public FairLossLink(String ip, int port,int timeout){
         this.ip = ip;
         this.port = port;
         try {
@@ -27,10 +25,9 @@ public class FairLossLink extends Link {
             socket.setSoTimeout(timeout);
         }
         catch (UnknownHostException | SocketException e){}
-        ow= new OutputWriter(output);
     }
-    public FairLossLink(String ip, int port, String output){
-        this(ip,port,0, output);
+    public FairLossLink(String ip, int port){
+        this(ip,port,0);
     }
 
     @Override
@@ -47,7 +44,6 @@ public class FairLossLink extends Link {
         String payload = new String(packet.getData(), 1, packet.getLength());
         Message m = new Message(packet.getAddress().getHostName(), packet.getPort(), ip, port,
                 ByteBuffer.wrap(Arrays.copyOfRange(packet.getData(),0,HEADER_SIZE)).getInt(), payload);
-        ow.addReceive(m);
         return m;
     }
 
@@ -63,7 +59,6 @@ public class FairLossLink extends Link {
                         = new DatagramPacket(result, result.length, InetAddress.getByName(m.getDstIP()), m.getDstPort());
                 System.out.println("send pkt "+m.getSeqNumber());
                 socket.send(packet);
-                ow.addBroadcast(m);
             } catch (UnknownHostException e) {
             } catch (IOException e) {
             }
@@ -73,7 +68,6 @@ public class FairLossLink extends Link {
     @Override
     public void close() {
         socket.close();
-        ow.write();
     }
 
     static byte[] concat(byte[] a1, byte[] a2) {

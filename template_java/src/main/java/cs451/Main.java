@@ -2,6 +2,7 @@ package cs451;
 
 import cs451.links.FairLossLink;
 import cs451.links.Link;
+import cs451.links.OutputLink;
 import cs451.links.PerfectLink;
 
 import java.io.IOException;
@@ -68,7 +69,7 @@ public class Main {
         Host me = getMe();
 
         // Tell what is the link
-        link = new PerfectLink(me.getIp(), me.getPort(), parser.output());
+        link = new OutputLink(new PerfectLink(me.getIp(), me.getPort()), parser.output());
 
         System.out.println("Broadcasting and delivering messages...\n");
 

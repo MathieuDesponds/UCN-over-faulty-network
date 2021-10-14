@@ -16,8 +16,8 @@ public class PerfectLink extends Link{
     private final int TIMEOUT = 5000;
     private final int WINDOW = 2;
 
-    public PerfectLink(String ip, int port, String output){
-        fll = new FairLossLink(ip,port,TIMEOUT, output);
+    public PerfectLink(String ip, int port){
+        fll = new FairLossLink(ip,port,TIMEOUT);
     }
     @Override
     public Message deliver() throws SocketTimeoutException {
@@ -41,12 +41,13 @@ public class PerfectLink extends Link{
         }catch(SocketTimeoutException e) {
 
         }finally{
-            send(hs.stream().map(i -> lm.get(i)).collect(Collectors.toList()));
+            //send(hs.stream().map(i -> lm.get(i)).collect(Collectors.toList()));
         }
     }
 
     @Override
     public void close(){
         fll.close();
+        System.out.println("close");
     }
 }

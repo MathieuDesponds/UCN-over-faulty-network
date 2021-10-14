@@ -1,13 +1,15 @@
 package cs451;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class Test {
     public static void main(String[] args) {
-        String s = "89salut ça va";
-        byte[] bt = s.getBytes();
-        byte [] head = ByteBuffer.allocate(4).putInt(4).array();
-        for (byte b  : head )
-            System.out.println(b);
+        HashSet<Integer> hs = new HashSet<Integer>();
+        List l = new ArrayList<>();
+        hs.stream().map(i -> l.get(i)).collect(Collectors.toList());
     }
 }
