@@ -1,22 +1,18 @@
 package cs451;
 
-import cs451.links.FairLossLink;
 import cs451.links.Link;
 import cs451.links.OutputLink;
 import cs451.links.PerfectLink;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
     private static Parser parser;
-    private static Link link;            ;
-    private static final int TIMEOUT = 8000; //TOdo remove it
+    private static Link link;
+    private static final int TIMEOUT_SENDER = 2000;
+    private static final int TIMEOUT_RECEIVER = 5000;
     private static void handleSignal() {
         //immediately stop network packet processing
         System.out.println("Immediately stopping network packet processing.");
@@ -69,14 +65,16 @@ public class Main {
         Host me = getMe();
 
         // Tell what is the link
-        link = new OutputLink(new PerfectLink(me.getIp(), me.getPort()), parser.output());
+
 
         System.out.println("Broadcasting and delivering messages...\n");
 
         //See if we are the host to send to
         if(parser.myId() == hostToSend.getId()){
+            link = new OutputLink(new PerfectLink(me.getIp(), me.getPort(),TIMEOUT_RECEIVER), parser.output());
             receiver();
         }else{
+            link = new OutputLink(new PerfectLink(me.getIp(), me.getPort(), TIMEOUT_SENDER), parser.output());
             sender(parser.configNbMessage(), hostToSend);
         }
 

@@ -2,47 +2,68 @@ package cs451.links;
 
 import cs451.Message;
 
-import java.lang.reflect.Array;
 import java.net.SocketTimeoutException;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.concurrent.TimeoutException;
 
 public class PerfectLink extends Link{
     private FairLossLink fll;
+
+    //Go-Back-N
+    private final int WINDOW = 2;
+    private int base = 0;
+    private int nextSend = 0;
+    private long sendTime = 0;
     private int waitingFor = 0; //for receiver
     private final int TIMEOUT = 5000;
-    private final int WINDOW = 2;
 
-    public PerfectLink(String ip, int port){
-        fll = new FairLossLink(ip,port,TIMEOUT);
+    public PerfectLink(String ip, int port, int timeout){
+        fll = new FairLossLink(ip,port,timeout);
     }
+
     @Override
     public Message deliver() throws SocketTimeoutException {
         Message m = fll.deliver();
-        Message ack = new Message(m.getSrcIP(), m.getSrcPort(), m.getSeqNumber(),"");
-        System.out.print("ack "+m.getSeqNumber());
-        fll.send(List.of(ack));
-        return m;
+        if(m.getSeqNumber() == waitingFor) {
+            fll.send(List.of(new Message(m.getSrcIP(), m.getSrcPort(), m.getSeqNumber(), "")));
+            waitingFor++;
+            return m;
+        }
+        //return new Message(m.getSrcIP(), m.getSrcPort(), m.getSeqNumber(), "Nothing");
+        return null;
     }
     
     @Override
     public void send(List<Message> lm) {
-        fll.send(lm);
-        HashSet<Integer> hs = new HashSet<Integer>(lm.stream().map(m -> m.getSeqNumber()).collect(Collectors.toSet()));
-        Message m;
-        try{
-            while(true){
+        int size = lm.size();
+        while(base < size) {
+            int to = Math.min(size, base + WINDOW);
+            fll.send(lm.subList(nextSend, to));
+            setTimer();
+            nextSend = to;
+            Message m;
+            try {
                 m = fll.deliver();
-                hs.remove(m.getSeqNumber());
+                if (m.getSeqNumber() == base) {
+                    System.out.println("ack "+m.getSeqNumber());
+                    base++;
+                }
+                checkTimeout();
+            } catch (SocketTimeoutException | TimeoutException e) {
+                System.out.println("TIMEOUT");
+                nextSend = base;
             }
-        }catch(SocketTimeoutException e) {
-
-        }finally{
-            send(hs.stream().map(i -> lm.get(i)).collect(Collectors.toList()));
         }
+    }
+
+    private void checkTimeout() throws TimeoutException {
+        long currentTime = System.currentTimeMillis();
+        if(sendTime + TIMEOUT < currentTime)
+            throw new TimeoutException();
+    }
+
+    private void setTimer() {
+        sendTime = System.currentTimeMillis();
     }
 
     @Override

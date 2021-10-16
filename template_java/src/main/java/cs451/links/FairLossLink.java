@@ -20,11 +20,12 @@ public class FairLossLink extends Link {
         this.port = port;
         try {
             InetAddress inetAddress = InetAddress.getByName(ip);
-            //InetAddress inetAddress = InetAddress.getLocalHost();
             socket = new DatagramSocket(port, inetAddress);
             socket.setSoTimeout(timeout);
         }
-        catch (UnknownHostException | SocketException e){}
+        catch (UnknownHostException | SocketException e){
+            System.out.println(e.getStackTrace());
+        }
     }
     public FairLossLink(String ip, int port){
         this(ip,port,0);
@@ -57,7 +58,7 @@ public class FairLossLink extends Link {
             try {
                 DatagramPacket packet
                         = new DatagramPacket(result, result.length, InetAddress.getByName(m.getDstIP()), m.getDstPort());
-                System.out.println("send pkt "+m.getSeqNumber());
+                System.out.println("send pkt "+m.getSeqNumber()+" "+lm.size());
                 socket.send(packet);
             } catch (UnknownHostException e) {
             } catch (IOException e) {

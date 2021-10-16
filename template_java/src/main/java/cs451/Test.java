@@ -8,8 +8,8 @@ import java.util.stream.Collectors;
 
 public class Test {
     public static void main(String[] args) {
-        HashSet<Integer> hs = new HashSet<Integer>();
-        List l = new ArrayList<>();
-        hs.stream().map(i -> l.get(i)).collect(Collectors.toList());
+        List<Integer> l = List.of(1,2,3,4,5,6,7,8);
+        for(int i : l.subList(0,0))
+            System.out.print(i);
     }
 }
