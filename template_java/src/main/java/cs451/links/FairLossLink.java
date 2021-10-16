@@ -9,7 +9,9 @@ import java.util.Arrays;
 import java.util.List;
 
 public class FairLossLink extends Link {
-    private final int HEADER_SIZE = 1 * 4; //int a 4 times bigger than bytes
+    private final int INT_SIZE = 4;
+    private final int INT_IN_HEADER = 2;
+    private final int HEADER_SIZE = INT_IN_HEADER * INT_SIZE; //int a 4 times bigger than bytes
     private final int MAX_SIZE_PACKET = 32;
     private DatagramSocket socket;
     private String ip;
@@ -42,23 +44,24 @@ public class FairLossLink extends Link {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        String payload = new String(packet.getData(), 1, packet.getLength());
-        Message m = new Message(packet.getAddress().getHostName(), packet.getPort(), ip, port,
-                ByteBuffer.wrap(Arrays.copyOfRange(packet.getData(),0,HEADER_SIZE)).getInt(), payload);
+        String payload = new String(packet.getData(), INT_IN_HEADER, packet.getLength());
+        ByteBuffer b = ByteBuffer.wrap(Arrays.copyOfRange(packet.getData(),0,HEADER_SIZE));
+        Message m = new Message(packet.getAddress().getHostName(), packet.getPort(),ByteBuffer.wrap(Arrays.copyOfRange(packet.getData(),0,HEADER_SIZE)).getInt(4), ip, port,
+                ByteBuffer.wrap(Arrays.copyOfRange(packet.getData(),0,HEADER_SIZE)).getInt(0), payload);
         return m;
     }
 
     @Override
     public void send(List<Message> lm) {
         for(Message m : lm) {
-            byte[] head = ByteBuffer.allocate(HEADER_SIZE).putInt(m.getSeqNumber()).array();
+            byte[] head = ByteBuffer.allocate(HEADER_SIZE).putInt(m.getSeqNumber()).putInt(m.getSndID()).array();
             byte[] buf = m.getPayload().getBytes();
             byte[] result = concat(head, buf);
 
             try {
                 DatagramPacket packet
                         = new DatagramPacket(result, result.length, InetAddress.getByName(m.getDstIP()), m.getDstPort());
-                System.out.println("send pkt "+m.getSeqNumber()+" "+lm.size());
+                //System.out.println("send pkt "+m.getSeqNumber()+" "+m.getSndID());
                 socket.send(packet);
             } catch (UnknownHostException e) {
             } catch (IOException e) {

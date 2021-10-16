@@ -10,7 +10,7 @@ public class PerfectLink extends Link{
     private FairLossLink fll;
 
     //Go-Back-N
-    private final int WINDOW = 2;
+    private final int WINDOW = 10;
     private int base = 0;
     private int nextSend = 0;
     private long sendTime = 0;
@@ -25,7 +25,7 @@ public class PerfectLink extends Link{
     public Message deliver() throws SocketTimeoutException {
         Message m = fll.deliver();
         if(m.getSeqNumber() == waitingFor) {
-            fll.send(List.of(new Message(m.getSrcIP(), m.getSrcPort(), m.getSeqNumber(), "")));
+            fll.send(List.of(new Message(m.getSrcIP(), m.getSrcPort(),m.getSndID(), m.getSeqNumber(), "")));
             waitingFor++;
             return m;
         }
@@ -45,7 +45,7 @@ public class PerfectLink extends Link{
             try {
                 m = fll.deliver();
                 if (m.getSeqNumber() == base) {
-                    System.out.println("ack "+m.getSeqNumber());
+                    //System.out.println("ack "+m.getSeqNumber());
                     base++;
                 }
                 checkTimeout();

@@ -63,6 +63,7 @@ public class Main {
 
         Host hostToSend = getHostToSendTo();
         Host me = getMe();
+        int myId = me.getId();
 
         // Tell what is the link
 
@@ -70,12 +71,12 @@ public class Main {
         System.out.println("Broadcasting and delivering messages...\n");
 
         //See if we are the host to send to
-        if(parser.myId() == hostToSend.getId()){
+        if(myId == hostToSend.getId()){
             link = new OutputLink(new PerfectLink(me.getIp(), me.getPort(),TIMEOUT_RECEIVER), parser.output());
             receiver();
         }else{
             link = new OutputLink(new PerfectLink(me.getIp(), me.getPort(), TIMEOUT_SENDER), parser.output());
-            sender(parser.configNbMessage(), hostToSend);
+            sender(parser.configNbMessage(), hostToSend, myId);
         }
 
         close();
@@ -103,14 +104,16 @@ public class Main {
         }
     }
 
-    private static void sender(int configNbMessage, Host hostToSend) {
+    private static void sender(int configNbMessage, Host hostToSend, int myID) {
         //Preparation of the sended messages
         List<Message> lm = new ArrayList<Message>();
         for(int i = 0; i<configNbMessage; ++i) {
-            lm.add(new Message(hostToSend.getIp(), hostToSend.getPort(), i, "AAAA" + i));
+            lm.add(new Message(hostToSend.getIp(), hostToSend.getPort(), myID, i, "AAAA" + i));
         }
         //Sending messages
+        long startTime = System.currentTimeMillis();
         link.send(lm);
+        System.out.println("Perfrmance = "+(System.currentTimeMillis()-startTime));
     }
 
     private static Host getHostToSendTo() {
