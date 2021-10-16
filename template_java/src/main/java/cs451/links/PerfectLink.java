@@ -11,22 +11,25 @@ public class PerfectLink extends Link{
 
     //Go-Back-N
     private final int WINDOW = 10;
+    private final int NUMBER_OF_HOSTS;
     private int base = 0;
     private int nextSend = 0;
     private long sendTime = 0;
-    private int waitingFor = 0; //for receiver
+    private int [] waitingFor; //for receiver
     private final int TIMEOUT = 5000;
 
-    public PerfectLink(String ip, int port, int timeout){
+    public PerfectLink(String ip, int port, int timeout, int numberOfHosts){
         fll = new FairLossLink(ip,port,timeout);
+        this.NUMBER_OF_HOSTS = numberOfHosts;
+        waitingFor = new int [NUMBER_OF_HOSTS+1];
     }
 
     @Override
     public Message deliver() throws SocketTimeoutException {
         Message m = fll.deliver();
-        if(m.getSeqNumber() == waitingFor) {
+        if(m.getSeqNumber() == waitingFor[m.getSndID()]) {
             fll.send(List.of(new Message(m.getSrcIP(), m.getSrcPort(),m.getSndID(), m.getSeqNumber(), "")));
-            waitingFor++;
+            waitingFor[m.getSndID()]++;
             return m;
         }
         //return new Message(m.getSrcIP(), m.getSrcPort(), m.getSeqNumber(), "Nothing");
@@ -50,7 +53,7 @@ public class PerfectLink extends Link{
                 }
                 checkTimeout();
             } catch (SocketTimeoutException | TimeoutException e) {
-                System.out.println("TIMEOUT");
+                //System.out.println("TIMEOUT");
                 nextSend = base;
             }
         }

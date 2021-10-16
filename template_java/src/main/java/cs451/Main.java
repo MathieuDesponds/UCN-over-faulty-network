@@ -72,10 +72,10 @@ public class Main {
 
         //See if we are the host to send to
         if(myId == hostToSend.getId()){
-            link = new OutputLink(new PerfectLink(me.getIp(), me.getPort(),TIMEOUT_RECEIVER), parser.output());
+            link = new OutputLink(new PerfectLink(me.getIp(), me.getPort(),TIMEOUT_RECEIVER, parser.hosts().size()), parser.output());
             receiver();
         }else{
-            link = new OutputLink(new PerfectLink(me.getIp(), me.getPort(), TIMEOUT_SENDER), parser.output());
+            link = new OutputLink(new PerfectLink(me.getIp(), me.getPort(), TIMEOUT_SENDER, parser.hosts().size()), parser.output());
             sender(parser.configNbMessage(), hostToSend, myId);
         }
 
