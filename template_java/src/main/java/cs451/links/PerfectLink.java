@@ -41,7 +41,7 @@ public class PerfectLink extends Link{
         }catch(SocketTimeoutException e) {
 
         }finally{
-            //send(hs.stream().map(i -> lm.get(i)).collect(Collectors.toList()));
+            send(hs.stream().map(i -> lm.get(i)).collect(Collectors.toList()));
         }
     }
 
