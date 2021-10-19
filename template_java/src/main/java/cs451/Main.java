@@ -11,14 +11,14 @@ import java.util.List;
 public class Main {
     private static Parser parser;
     private static Link link;
-    private static final int TIMEOUT_SENDER = 2000;
+    private static final int TIMEOUT_SENDER =500;
     private static final int TIMEOUT_RECEIVER = 5000;
     private static void handleSignal() {
         //immediately stop network packet processing
         System.out.println("Immediately stopping network packet processing.");
-        close();
         //write/flush output file if necessary
         System.out.println("Writing output.");
+        close();
     }
 
     private static void initSignalHandlers() {
@@ -100,14 +100,14 @@ public class Main {
                 m = link.deliver();
             }
         }catch(SocketTimeoutException e){
-            System.out.println("Timeout");
+            //System.out.println("Timeout");
         }
     }
 
     private static void sender(int configNbMessage, Host hostToSend, int myID) {
         //Preparation of the sended messages
         List<Message> lm = new ArrayList<Message>();
-        for(int i = 0; i<configNbMessage; ++i) {
+        for(int i = 1; i<=configNbMessage; ++i) {
             lm.add(new Message(hostToSend.getIp(), hostToSend.getPort(), myID, i, "AAAA" + i));
         }
         //Sending messages

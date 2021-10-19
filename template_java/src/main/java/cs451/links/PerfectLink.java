@@ -10,18 +10,20 @@ public class PerfectLink extends Link{
     private FairLossLink fll;
 
     //Go-Back-N
-    private final int WINDOW = 10;
+    private final int WINDOW = 2;
     private final int NUMBER_OF_HOSTS;
-    private int base = 0;
-    private int nextSend = 0;
+    private int base = 1; //Seq number of the base --> seq n is at list(n-1)
+    private int nextSend = 1;
     private long sendTime = 0;
     private int [] waitingFor; //for receiver
-    private final int TIMEOUT = 5000;
+    private final int TIMEOUT = 500;
 
     public PerfectLink(String ip, int port, int timeout, int numberOfHosts){
         fll = new FairLossLink(ip,port,timeout);
         this.NUMBER_OF_HOSTS = numberOfHosts;
         waitingFor = new int [NUMBER_OF_HOSTS+1];
+        for(int i=0; i<waitingFor.length ; i++)
+            waitingFor[i] = 1;
     }
 
     @Override
@@ -39,9 +41,9 @@ public class PerfectLink extends Link{
     @Override
     public void send(List<Message> lm) {
         int size = lm.size();
-        while(base < size) {
-            int to = Math.min(size, base + WINDOW);
-            fll.send(lm.subList(nextSend, to));
+        while(base < size+1) {
+            int to = Math.min(size+1, base + WINDOW );
+            fll.send(lm.subList(nextSend-1, to-1));
             setTimer();
             nextSend = to;
             Message m;
