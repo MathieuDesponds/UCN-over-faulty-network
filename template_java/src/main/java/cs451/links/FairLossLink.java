@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.net.*;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.List;
 
 public class FairLossLink extends Link {
     private final int INT_SIZE = 4;
@@ -52,20 +51,18 @@ public class FairLossLink extends Link {
     }
 
     @Override
-    public void send(List<Message> lm) {
-        for(Message m : lm) {
-            byte[] head = ByteBuffer.allocate(HEADER_SIZE).putInt(m.getSeqNumber()).putInt(m.getSndID()).array();
-            byte[] buf = m.getPayload().getBytes();
-            byte[] result = concat(head, buf);
+    public void send(Message m) {
+        byte[] head = ByteBuffer.allocate(HEADER_SIZE).putInt(m.getSeqNumber()).putInt(m.getSndID()).array();
+        byte[] buf = m.getPayload().getBytes();
+        byte[] result = concat(head, buf);
 
-            try {
-                DatagramPacket packet
-                        = new DatagramPacket(result, result.length, InetAddress.getByName(m.getDstIP()), m.getDstPort());
-                //System.out.println("send pkt "+m.getSeqNumber()+" "+m.getSndID());
-                socket.send(packet);
-            } catch (UnknownHostException e) {
-            } catch (IOException e) {
-            }
+        try {
+            DatagramPacket packet
+                    = new DatagramPacket(result, result.length, InetAddress.getByName(m.getDstIP()), m.getDstPort());
+            //System.out.println("send pkt "+m.getSeqNumber()+" "+m.getSndID());
+            socket.send(packet);
+        } catch (UnknownHostException e) {
+        } catch (IOException e) {
         }
     }
 

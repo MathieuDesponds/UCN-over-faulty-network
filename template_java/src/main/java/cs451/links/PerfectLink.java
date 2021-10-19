@@ -16,7 +16,14 @@ public class PerfectLink extends Link{
     private int nextSend = 1;
     private long sendTime = 0;
     private int [] waitingFor; //for receiver
-    private final int TIMEOUT = 500;
+
+    //TIMEOUT
+    private final int TIMEOUT = 1000;
+    private int estimatedRTT;
+    private int deviationRTT;
+    private int timeoutInterval = 1000;
+    private double alpha = 0.125;
+    private double beta = 0.25;
 
     public PerfectLink(String ip, int port, int timeout, int numberOfHosts){
         fll = new FairLossLink(ip,port,timeout);
@@ -38,12 +45,14 @@ public class PerfectLink extends Link{
         return null;
     }
     
-    @Override
+    //@Override
     public void send(List<Message> lm) {
         int size = lm.size();
         while(base < size+1) {
             int to = Math.min(size+1, base + WINDOW );
-            fll.send(lm.subList(nextSend-1, to-1));
+            for(Message m : lm.subList(nextSend-1, to-1)) {
+                fll.send(m);
+            }
             setTimer();
             nextSend = to;
             Message m;
