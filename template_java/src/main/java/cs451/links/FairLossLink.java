@@ -38,16 +38,18 @@ public class FairLossLink extends Link {
         DatagramPacket packet = new DatagramPacket(buf, buf.length);
         try {
             socket.receive(packet);
+            String payload = new String(packet.getData(), INT_IN_HEADER, packet.getLength());
+            ByteBuffer b = ByteBuffer.wrap(Arrays.copyOfRange(packet.getData(),0,HEADER_SIZE));
+            Message m = new Message(packet.getAddress().getHostName(), packet.getPort(),ByteBuffer.wrap(Arrays.copyOfRange(packet.getData(),0,HEADER_SIZE)).getInt(4), ip, port,
+                    ByteBuffer.wrap(Arrays.copyOfRange(packet.getData(),0,HEADER_SIZE)).getInt(0), payload);
+            return m;
         } catch (SocketTimeoutException e) {
             throw e;
+        } catch (SocketException e) {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        String payload = new String(packet.getData(), INT_IN_HEADER, packet.getLength());
-        ByteBuffer b = ByteBuffer.wrap(Arrays.copyOfRange(packet.getData(),0,HEADER_SIZE));
-        Message m = new Message(packet.getAddress().getHostName(), packet.getPort(),ByteBuffer.wrap(Arrays.copyOfRange(packet.getData(),0,HEADER_SIZE)).getInt(4), ip, port,
-                ByteBuffer.wrap(Arrays.copyOfRange(packet.getData(),0,HEADER_SIZE)).getInt(0), payload);
-        return m;
+        return null;
     }
 
     @Override
@@ -60,7 +62,7 @@ public class FairLossLink extends Link {
             DatagramPacket packet
                     = new DatagramPacket(result, result.length, InetAddress.getByName(m.getDstIP()), m.getDstPort());
             socket.send(packet);
-            System.out.println("send pkt "+m.getSeqNumber()+" "+m.getSndID());
+            //System.out.println("send pkt "+m.getSeqNumber()+" "+m.getSndID());
         } catch (UnknownHostException e) {
         } catch (IOException e) {
         }
@@ -75,5 +77,13 @@ public class FairLossLink extends Link {
         byte[] result = Arrays.copyOf(a1, a1.length + a2.length);
         System.arraycopy(a2, 0, result, a1.length, a2.length);
         return result;
+    }
+
+    public void setTimeOut(int timeoutInterval) {
+        try {
+            socket.setSoTimeout(timeoutInterval);
+        } catch (SocketException e) {
+
+        }
     }
 }

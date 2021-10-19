@@ -12,7 +12,7 @@ public class Main {
     private static Parser parser;
     private static Link link;
     private static final int TIMEOUT_SENDER =500;
-    private static final int TIMEOUT_RECEIVER = 5000;
+    private static final int TIMEOUT_RECEIVER = 20000;
     private static void handleSignal() {
         //immediately stop network packet processing
         System.out.println("Immediately stopping network packet processing.");
@@ -72,10 +72,12 @@ public class Main {
 
         //See if we are the host to send to
         if(myId == hostToSend.getId()){
-            link = new OutputLink(new PerfectLink(me.getIp(), me.getPort(),TIMEOUT_RECEIVER, parser.hosts().size()), parser.output());
+            link = new OutputLink(new PerfectLink(me.getIp(), me.getPort(),TIMEOUT_RECEIVER, parser.hosts().size()),
+                    parser.output());
             receiver();
         }else{
-            link = new OutputLink(new PerfectLink(me.getIp(), me.getPort(), TIMEOUT_SENDER, parser.hosts().size()), parser.output());
+            link = new OutputLink(new PerfectLink(me.getIp(), me.getPort(), TIMEOUT_SENDER, parser.hosts().size()),
+                    parser.output());
             sender(parser.configNbMessage(), hostToSend, myId);
         }
 
@@ -100,7 +102,7 @@ public class Main {
                 m = link.deliver();
             }
         }catch(SocketTimeoutException e){
-            //System.out.println("Timeout");
+            System.out.println("Timeout");
         }
     }
 
@@ -114,7 +116,7 @@ public class Main {
         long startTime = System.currentTimeMillis();
         for(Message m :lm)
             link.send(m);
-        System.out.println("Perfrmance = "+(System.currentTimeMillis()-startTime));
+        //System.out.println("Performance = "+(System.currentTimeMillis()-startTime));
     }
 
     private static Host getHostToSendTo() {

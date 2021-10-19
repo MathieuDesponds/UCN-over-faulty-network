@@ -21,7 +21,8 @@ public class OutputLink extends Link{
     @Override
     public Message deliver() throws SocketTimeoutException {
         Message m = link.deliver();
-        output.add("d "+m.getSrcPort()+" "+m.getSeqNumber());
+        if(m != null)
+            output.add("d "+m.getSndID()+" "+m.getSeqNumber());
         return m;
     }
 
