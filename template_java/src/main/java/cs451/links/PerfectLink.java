@@ -3,19 +3,20 @@ package cs451.links;
 import cs451.Message;
 
 import java.net.SocketTimeoutException;
-import java.util.List;
+import java.util.ArrayDeque;
 import java.util.concurrent.TimeoutException;
 
 public class PerfectLink extends Link{
     private FairLossLink fll;
 
     //Go-Back-N
-    private final int WINDOW = 2;
+    private final int WINDOW = 10;
     private final int NUMBER_OF_HOSTS;
     private int base = 1; //Seq number of the base --> seq n is at list(n-1)
     private int nextSend = 1;
     private long sendTime = 0;
     private int [] waitingFor; //for receiver
+    private ArrayDeque<Message> windowMessages;
 
     //TIMEOUT
     private final int TIMEOUT = 1000;
@@ -31,13 +32,14 @@ public class PerfectLink extends Link{
         waitingFor = new int [NUMBER_OF_HOSTS+1];
         for(int i=0; i<waitingFor.length ; i++)
             waitingFor[i] = 1;
+        windowMessages = new ArrayDeque<Message>();
     }
 
     @Override
     public Message deliver() throws SocketTimeoutException {
         Message m = fll.deliver();
         if(m.getSeqNumber() == waitingFor[m.getSndID()]) {
-            fll.send(List.of(new Message(m.getSrcIP(), m.getSrcPort(),m.getSndID(), m.getSeqNumber(), "")));
+            fll.send(new Message(m.getSrcIP(), m.getSrcPort(),m.getSndID(), m.getSeqNumber(), ""));
             waitingFor[m.getSndID()]++;
             return m;
         }
@@ -45,28 +47,29 @@ public class PerfectLink extends Link{
         return null;
     }
     
-    //@Override
-    public void send(List<Message> lm) {
-        int size = lm.size();
-        while(base < size+1) {
-            int to = Math.min(size+1, base + WINDOW );
-            for(Message m : lm.subList(nextSend-1, to-1)) {
-                fll.send(m);
-            }
-            setTimer();
-            nextSend = to;
-            Message m;
-            try {
-                m = fll.deliver();
-                if (m.getSeqNumber() == base) {
-                    //System.out.println("ack "+m.getSeqNumber());
-                    base++;
+    @Override
+    public void send(Message m) {
+        if(windowMessages.size() < WINDOW){
+            fll.send(m);
+            windowMessages.addLast(m);
+        }else {
+            boolean accepted = false;
+            while(!accepted)
+                try {
+                    Message ack = fll.deliver();
+                    if (ack.getSeqNumber() == base) {
+                        accepted = true;
+                        System.out.println("ack "+m.getSeqNumber());
+                        windowMessages.removeFirst();
+                        base++;
+                        fll.send(m);
+                        windowMessages.addLast(m);
+                    }
+                } catch (SocketTimeoutException e) {
+                    for (Message me : windowMessages) {
+                        fll.send(me);
+                    }
                 }
-                checkTimeout();
-            } catch (SocketTimeoutException | TimeoutException e) {
-                //System.out.println("TIMEOUT");
-                nextSend = base;
-            }
         }
     }
 

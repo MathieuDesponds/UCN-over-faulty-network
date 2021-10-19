@@ -26,10 +26,9 @@ public class OutputLink extends Link{
     }
 
     @Override
-    public void send(List<Message> lm) {
-        link.send(lm);
-        for(Message m : lm)
-            output.add("b "+m.getSeqNumber());
+    public void send(Message m) {
+        link.send(m);
+        output.add("b "+m.getSeqNumber());
     }
 
     @Override

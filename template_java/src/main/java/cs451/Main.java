@@ -112,7 +112,8 @@ public class Main {
         }
         //Sending messages
         long startTime = System.currentTimeMillis();
-        link.send(lm);
+        for(Message m :lm)
+            link.send(m);
         System.out.println("Perfrmance = "+(System.currentTimeMillis()-startTime));
     }
 
