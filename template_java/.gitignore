@@ -25,9 +25,15 @@ bin/da_proc.jar
 *.zip
 *.tar.gz
 *.rar
-.idea
+*.idea
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+
+#class that I dont want
+src/main/java/cs451/Test.java
+
+#script that I dont want
+my_run.sh
 
 # End of https://www.toptal.com/developers/gitignore/api/java
