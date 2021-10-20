@@ -12,7 +12,7 @@ public class Main {
     private static Parser parser;
     private static Link link;
     private static final int TIMEOUT_SENDER =500;
-    private static final int TIMEOUT_RECEIVER = 20000;
+    private static final int TIMEOUT_RECEIVER = 50000;
     private static void handleSignal() {
         //immediately stop network packet processing
         System.out.println("Immediately stopping network packet processing.");

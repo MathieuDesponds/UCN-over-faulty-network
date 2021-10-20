@@ -9,7 +9,7 @@ public class PerfectLink extends Link{
     private FairLossLink fll;
 
     //Go-Back-N
-    private final int WINDOW = 2;
+    private final int WINDOW = 10;
     private final int NUMBER_OF_HOSTS;
     private int base = 1; //Seq number of the base --> seq n is at list(n-1)
     private int nextSend = 1;
@@ -20,8 +20,9 @@ public class PerfectLink extends Link{
     //TIMEOUT
     private int estimatedRTT = 500;
     private int deviationRTT = 125;
-    private int timeoutInterval = 1000;
-    private final double alpha = 0.125;
+    private int timeoutInterval = 500;
+    private final int TIMEOUT_INTERVAL_MAX = 2500;
+    private final double alpha = 0.25; //Recommended 0.125
     private final double beta = 0.25;
     private ArrayDeque<Long> timeouts;
 
@@ -38,7 +39,9 @@ public class PerfectLink extends Link{
     @Override
     public Message deliver() throws SocketTimeoutException {
         Message m = fll.deliver();
-        if(m != null && m.getSeqNumber() == waitingFor[m.getSndID()]) {
+        if(m != null && m.getSeqNumber() < waitingFor[m.getSndID()]) { //ReAcking
+            fll.send(new Message(m.getSrcIP(), m.getSrcPort(),m.getSndID(), m.getSeqNumber(), ""));
+        } else if(m != null && m.getSeqNumber() == waitingFor[m.getSndID()]) {
             fll.send(new Message(m.getSrcIP(), m.getSrcPort(),m.getSndID(), m.getSeqNumber(), ""));
             waitingFor[m.getSndID()]++;
             return m;
@@ -76,7 +79,7 @@ public class PerfectLink extends Link{
     }
 
     private void timeout() {
-        timeoutInterval *= 2;
+        timeoutInterval = Math.min(timeoutInterval*2, TIMEOUT_INTERVAL_MAX);
         timeouts.clear();
         for (Message me : windowMessages) {
             fll.send(me);
@@ -88,8 +91,8 @@ public class PerfectLink extends Link{
         long sampleRtt = System.currentTimeMillis()-timeSent;
         estimatedRTT = (int) ((1-alpha) * estimatedRTT + alpha * sampleRtt);
         deviationRTT = (int) ((1-beta) * deviationRTT + beta * Math.abs(sampleRtt-estimatedRTT));
-        timeoutInterval = estimatedRTT + 4*deviationRTT;
-        fll.setTimeOut(timeoutInterval/4);
+        timeoutInterval = estimatedRTT + 2*deviationRTT;
+        fll.setTimeOut(timeoutInterval);
     }
 
     private void checkTimeoutGoBackN() {

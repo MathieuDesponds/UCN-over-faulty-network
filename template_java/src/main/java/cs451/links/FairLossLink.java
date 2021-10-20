@@ -25,7 +25,7 @@ public class FairLossLink extends Link {
             socket.setSoTimeout(timeout);
         }
         catch (UnknownHostException | SocketException e){
-            System.out.println(e.getStackTrace());
+            System.err.println(e.getStackTrace());
         }
     }
     public FairLossLink(String ip, int port){
