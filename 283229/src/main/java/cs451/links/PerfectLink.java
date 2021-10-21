@@ -4,6 +4,7 @@ import cs451.Message;
 
 import java.net.SocketTimeoutException;
 import java.util.ArrayDeque;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class PerfectLink extends Link{
     private FairLossLink fll;
@@ -15,7 +16,6 @@ public class PerfectLink extends Link{
     private int nextSend = 1;
     private long sendTime = 0;
     private int [] waitingFor; //for receiver
-    private ArrayDeque<Message> windowMessages;
 
     //TIMEOUT
     private int estimatedRTT = 500;
@@ -26,14 +26,21 @@ public class PerfectLink extends Link{
     private final double beta = 0.25;
     private ArrayDeque<Long> timeouts;
 
+    //Thread
+    private ConcurrentLinkedDeque<Message> mToSend;
+    private ConcurrentLinkedDeque<Message> waitingToBeSent;
+    private ConcurrentLinkedDeque<Message> windowMessages;
+
     public PerfectLink(String ip, int port, int timeout, int numberOfHosts){
         fll = new FairLossLink(ip,port,timeout);
         this.NUMBER_OF_HOSTS = numberOfHosts;
         waitingFor = new int [NUMBER_OF_HOSTS+1];
         for(int i=0; i<waitingFor.length ; i++)
             waitingFor[i] = 1;
-        windowMessages = new ArrayDeque<Message>();
+        windowMessages = new ConcurrentLinkedDeque<Message>();
         timeouts = new ArrayDeque<>();
+
+        mToSend = new ConcurrentLinkedDeque<>();
     }
 
     @Override
@@ -51,31 +58,7 @@ public class PerfectLink extends Link{
     
     @Override
     public void send(Message m) {
-        if(windowMessages.size() < WINDOW){
-            fll.send(m);
-            windowMessages.addLast(m);
-            timeouts.addLast(System.currentTimeMillis());
-            checkTimeoutGoBackN();
-        }else {
-            boolean accepted = false;
-            while(!accepted) {
-                checkTimeoutGoBackN();
-                try {
-                    Message ack = fll.deliver();
-                    if (ack != null && ack.getSeqNumber() == base) {
-                        accepted = true;
-                        //System.out.println("ack " + m.getSeqNumber());
-                        windowMessages.removeFirst();
-                        updateTimeout(timeouts.getFirst());
-                        timeouts.removeFirst();
-                        base++;
-                        fll.send(m);
-                        windowMessages.addLast(m);
-                        timeouts.addLast(System.currentTimeMillis());
-                    }
-                } catch (SocketTimeoutException e) {}
-            }
-        }
+        waitingToBeSent.addLast(m);
     }
 
     private void timeout() {
@@ -100,10 +83,51 @@ public class PerfectLink extends Link{
             timeout();
     }
 
-
     @Override
     public void close(){
         fll.close();
-        //System.out.println("close");
+    }
+    private class SendingThread implements Runnable {
+
+        @Override
+        public void run() {
+            while(true){
+                while(windowMessages.size() < WINDOW){
+                    mToSend.addLast(waitingToBeSent.pollFirst());
+                }
+                while(!mToSend.isEmpty()){
+                    Message m = mToSend.pollFirst();
+                    fll.send(m);
+                    if(m.getMessageType() == Message.MessageType.MESSSAGE){
+                        windowMessages.addLast(m);
+                        timeouts.addLast(System.currentTimeMillis());
+                    }
+                }
+
+            }
+        }
+    }
+
+    private class ReceivingThread implements Runnable {
+
+        @Override
+        public void run() {
+            while(true){
+                try {
+                    Message ack = fll.deliver();
+                    if (ack != null && ack.getSeqNumber() == base) {
+                        //System.out.println("ack " + m.getSeqNumber());
+                        windowMessages.removeFirst();
+                        updateTimeout(timeouts.getFirst());
+                        timeouts.removeFirst();
+                        base++;
+                    }
+                } catch (SocketTimeoutException e) {}
+            }
+        }
+
+        private void sendNext(){
+
+        }
     }
 }
