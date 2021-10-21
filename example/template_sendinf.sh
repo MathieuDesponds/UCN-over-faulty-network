@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # Build the application:
 ./build.sh
 
