@@ -1,6 +1,7 @@
-package cs451.links;
+package cs451.layers.links;
 
 import cs451.Message;
+import cs451.layers.Layer;
 
 import java.net.SocketTimeoutException;
 import java.util.ArrayDeque;
@@ -8,7 +9,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class PerfectLink extends Link{
     private FairLossLink fll;
-
+    private Layer topLayer;
     //Go-Back-N
     private final int WINDOW = 10;
     private final int NUMBER_OF_HOSTS;
@@ -30,9 +31,11 @@ public class PerfectLink extends Link{
     private ConcurrentLinkedDeque<Message> mToSend;
     private ConcurrentLinkedDeque<Message> waitingToBeSent;
     private ConcurrentLinkedDeque<Message> windowMessages;
+    private ConcurrentLinkedDeque<Message> messageToDeliver;
 
-    public PerfectLink(String ip, int port, int timeout, int numberOfHosts){
-        fll = new FairLossLink(ip,port,timeout);
+    public PerfectLink(Layer topLayer, String ip, int port, int timeout, int numberOfHosts){
+        this.topLayer = topLayer;
+        fll = new FairLossLink(this,ip,port,timeout);
         this.NUMBER_OF_HOSTS = numberOfHosts;
         waitingFor = new int [NUMBER_OF_HOSTS+1];
         for(int i=0; i<waitingFor.length ; i++)
@@ -41,6 +44,7 @@ public class PerfectLink extends Link{
         timeouts = new ArrayDeque<>();
 
         mToSend = new ConcurrentLinkedDeque<>();
+        messageToDeliver = new ConcurrentLinkedDeque<>();
     }
 
     @Override
@@ -87,7 +91,13 @@ public class PerfectLink extends Link{
     public void close(){
         fll.close();
     }
-    private class SendingThread implements Runnable {
+
+    @Override
+    public void deliveredFromBottom(Message m) {
+        messageToDeliver.addLast(m);
+    }
+
+    private class PLSendingThread implements Runnable {
 
         @Override
         public void run() {
@@ -108,26 +118,25 @@ public class PerfectLink extends Link{
         }
     }
 
-    private class ReceivingThread implements Runnable {
-
+    private class PLReceivingThread implements Runnable {
         @Override
         public void run() {
             while(true){
-                try {
-                    Message ack = fll.deliver();
-                    if (ack != null && ack.getSeqNumber() == base) {
-                        //System.out.println("ack " + m.getSeqNumber());
-                        windowMessages.removeFirst();
-                        updateTimeout(timeouts.getFirst());
-                        timeouts.removeFirst();
-                        base++;
+                if(!messageToDeliver.isEmpty()){
+                    Message m = messageToDeliver.pollFirst();
+                    if(m.getMessageType() == Message.MessageType.MESSSAGE){
+                        topLayer.deliveredFromBottom(m);
+                    }else if(m.getMessageType() == Message.MessageType.ACK){
+                        if (m.getSeqNumber() == base) {
+                            //System.out.println("ack " + m.getSeqNumber());
+                            windowMessages.removeFirst();
+                            updateTimeout(timeouts.getFirst());
+                            timeouts.removeFirst();
+                            base++;
+                        }
                     }
-                } catch (SocketTimeoutException e) {}
+                }
             }
-        }
-
-        private void sendNext(){
-
         }
     }
 }

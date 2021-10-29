@@ -1,13 +1,7 @@
 package cs451;
 
-import cs451.links.FairLossLink;
-
-import java.io.FileWriter;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Host {
 
