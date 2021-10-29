@@ -1,4 +1,4 @@
-package cs451.layers.links;
+package cs451.layers;
 
 import cs451.Message;
 

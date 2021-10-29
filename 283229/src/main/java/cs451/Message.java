@@ -1,9 +1,10 @@
 package cs451;
 
 import java.io.*;
+import java.net.InetAddress;
 
 public class Message implements Serializable {
-    public enum MessageType {MESSSAGE, ACK};
+    public enum MessageType {MESSAGE, ACK};
 
     private int sndID;
     private int seqNumber;
@@ -25,9 +26,6 @@ public class Message implements Serializable {
         this.seqNumber = seqNumber;
         this.mt = mt;
         this.payload = payload;
-    }
-    public Message(String dstIP, int dstPort,int sndID, int seqNumber,MessageType mt, String payload){
-        this("", -1, sndID, dstIP, dstPort, seqNumber, mt, payload);
     }
 
     public String getSrcIP() {
@@ -62,6 +60,11 @@ public class Message implements Serializable {
         return mt;
     }
 
+    public void setAddress(InetAddress address, int port) {
+        this.dstIP = address.getHostName();
+        this.dstPort = port;
+    }
+
     public  byte[] serializeToBytes(){
         try(ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(baos)){
@@ -75,11 +78,11 @@ public class Message implements Serializable {
 
     public static Message deserializeFromBytes(byte[] data){
         try(ByteArrayInputStream bais = new ByteArrayInputStream(data);
-            ObjectInputStream oi = new ObjectInputStream(bais) {
-            }) {
+            ObjectInputStream oi = new ObjectInputStream(bais)) {
             return (Message) oi.readObject();
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
+            return null;
         }
     }
 }

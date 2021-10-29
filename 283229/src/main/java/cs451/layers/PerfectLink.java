@@ -1,13 +1,12 @@
-package cs451.layers.links;
+package cs451.layers;
 
 import cs451.Message;
-import cs451.layers.Layer;
 
 import java.net.SocketTimeoutException;
 import java.util.ArrayDeque;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
-public class PerfectLink extends Link{
+public class PerfectLink extends Layer{
     private FairLossLink fll;
     private Layer topLayer;
     //Go-Back-N
@@ -108,7 +107,7 @@ public class PerfectLink extends Link{
                 while(!mToSend.isEmpty()){
                     Message m = mToSend.pollFirst();
                     fll.send(m);
-                    if(m.getMessageType() == Message.MessageType.MESSSAGE){
+                    if(m.getMessageType() == Message.MessageType.MESSAGE){
                         windowMessages.addLast(m);
                         timeouts.addLast(System.currentTimeMillis());
                     }
@@ -124,7 +123,7 @@ public class PerfectLink extends Link{
             while(true){
                 if(!messageToDeliver.isEmpty()){
                     Message m = messageToDeliver.pollFirst();
-                    if(m.getMessageType() == Message.MessageType.MESSSAGE){
+                    if(m.getMessageType() == Message.MessageType.MESSAGE){
                         topLayer.deliveredFromBottom(m);
                     }else if(m.getMessageType() == Message.MessageType.ACK){
                         if (m.getSeqNumber() == base) {

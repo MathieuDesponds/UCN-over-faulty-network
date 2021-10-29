@@ -1,83 +1,47 @@
-package cs451.layers.links;
+package cs451.layers;
 
 import cs451.Message;
-import cs451.layers.Layer;
 
 import java.io.IOException;
 import java.net.*;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
-public class FairLossLink extends Link {
-    private final int INT_SIZE = 4;
-    private final int INT_IN_HEADER = 2;
-    private final int HEADER_SIZE = INT_IN_HEADER * INT_SIZE; //int a 4 times bigger than bytes
+public class FairLossLink extends Layer {
     private final int MAX_SIZE_PACKET = 32;
     private DatagramSocket socket;
-    private Layer topLayer;
     private String ip;
     private int port;
 
     //Threads
     private ConcurrentLinkedDeque<Message> mToSend;
+    Thread flST;
+    Thread flRT;
 
-    public FairLossLink(Layer topLayer, String ip, int port, int timeout){
-        this.topLayer = topLayer;
+    public FairLossLink(Layer topLayer, String ip, int port){
+        //Layers
+        super.setTopLayer(topLayer);
+        super.setTopLayer(null);
+
+        //Socket stuff
         this.ip = ip;
         this.port = port;
         try {
             InetAddress inetAddress = InetAddress.getByName(ip);
             socket = new DatagramSocket(port, inetAddress);
-            socket.setSoTimeout(timeout);
         }
         catch (UnknownHostException | SocketException e){
             System.err.println(e.getStackTrace());
         }
+
+        //Threads
         mToSend = new ConcurrentLinkedDeque<>();
-    }
-    public FairLossLink(Link topLink,String ip, int port){
-        this(topLink, ip, port,0);
+
+        flST = new Thread(new FLSendingThread());
+        flRT = new Thread(new FLReceivingThread());
+        flST.run();
+        flRT.run();
     }
 
-    @Override
-    public Message deliver() throws SocketTimeoutException {
-        byte [] buf = new byte [MAX_SIZE_PACKET];
-        DatagramPacket packet = new DatagramPacket(buf, buf.length);
-        try {
-            socket.receive(packet);
-            String payload = new String(packet.getData(), INT_IN_HEADER, packet.getLength());
-            ByteBuffer b = ByteBuffer.wrap(Arrays.copyOfRange(packet.getData(),0,HEADER_SIZE));
-            Message m = Message.deserializeFromBytes(packet.getData());
-            //ToDo add the addresses
-            return m;
-        } catch (SocketTimeoutException e) {
-            throw e;
-        } catch (SocketException e) {
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    @Override
-    public void send(Message m) {
-        byte[] result = m.serializeToBytes();
-
-        try {
-            DatagramPacket packet
-                    = new DatagramPacket(result, result.length, InetAddress.getByName(m.getDstIP()), m.getDstPort());
-            socket.send(packet);
-            //System.out.println("send pkt "+m.getSeqNumber()+" "+m.getSndID());
-        } catch (UnknownHostException e) {
-        } catch (IOException e) {
-        }
-    }
-
-    @Override
-    public void close() {
-        socket.close();
-    }
 
     public void setTimeOut(int timeoutInterval) {
         try {
@@ -89,7 +53,19 @@ public class FairLossLink extends Link {
 
     @Override
     public void deliveredFromBottom(Message m) {
+        System.err.print("Should not be called because it it the layer furthest down");
+    }
 
+    @Override
+    public void sendFromTop(Message m) {
+        mToSend.addLast(m);
+    }
+
+    @Override
+    public void close() {
+        flRT.interrupt();
+        flST.interrupt();
+        socket.close();
     }
 
     /**
@@ -139,7 +115,7 @@ public class FairLossLink extends Link {
                 try {
                     socket.receive(packet);
                     Message m = Message.deserializeFromBytes(packet.getData());
-                    //ToDo add the addresses
+                    m.setAddress(packet.getAddress(), packet.getPort());
                     topLayer.deliveredFromBottom(m);
                 } catch (SocketTimeoutException e) {
                     e.printStackTrace();

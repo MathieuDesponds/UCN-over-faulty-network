@@ -1,8 +1,8 @@
 package cs451;
 
 import cs451.layers.links.Link;
-import cs451.layers.links.OutputLink;
-import cs451.layers.links.PerfectLink;
+import cs451.layers.OutputLink;
+import cs451.layers.PerfectLink;
 
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
