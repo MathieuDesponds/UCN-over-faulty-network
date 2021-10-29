@@ -1,18 +1,17 @@
 package cs451;
 
-import cs451.layers.links.Link;
-import cs451.layers.OutputLink;
-import cs451.layers.PerfectLink;
+import cs451.layers.Layer;
+import cs451.layers.OutputLayer;
 
-import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
     private static Parser parser;
-    private static Link link;
+    private static Layer layer;
     private static final int TIMEOUT_SENDER =500;
     private static final int TIMEOUT_RECEIVER = 50000;
+
     private static void handleSignal() {
         //immediately stop network packet processing
         System.out.println("Immediately stopping network packet processing.");
@@ -72,16 +71,11 @@ public class Main {
 
         //See if we are the host to send to
         if(myId == hostToSend.getId()){
-            link = new OutputLink(new PerfectLink(me.getIp(), me.getPort(),TIMEOUT_RECEIVER, parser.hosts().size()),
-                    parser.output());
-            receiver();
+            layer = new OutputLayer(null, me.getIp(), me.getPort(), parser.output());
         }else{
-            link = new OutputLink(new PerfectLink(me.getIp(), me.getPort(), TIMEOUT_SENDER, parser.hosts().size()),
-                    parser.output());
+            layer = new OutputLayer(null, me.getIp(), me.getPort(), parser.output());
             sender(parser.configNbMessage(), hostToSend, myId);
         }
-
-        close();
 
         // After a process finishes broadcasting,
         // it waits forever for the delivery of messages.
@@ -92,31 +86,20 @@ public class Main {
     }
 
     private static void close() {
-        link.close();
+        layer.close();
     }
 
-    private static void receiver() {
-        Message m;
-        try{
-            while(true){
-                m = link.deliver();
-            }
-        }catch(SocketTimeoutException e){
-            //System.out.println("Timeout");
-        }
-    }
 
     private static void sender(int configNbMessage, Host hostToSend, int myID) {
         //Preparation of the sended messages
         List<Message> lm = new ArrayList<Message>();
         for(int i = 1; i<=configNbMessage; ++i) {
-            lm.add(new Message(hostToSend.getIp(), hostToSend.getPort(), myID, i, "AAAA" + i));
+            lm.add(new Message(myID, hostToSend.getIp(), hostToSend.getPort(), i, Message.MessageType.MESSAGE, "AAAA" + i));
         }
         //Sending messages
-        long startTime = System.currentTimeMillis();
+
         for(Message m :lm)
-            link.send(m);
-        //System.out.println("Performance = "+(System.currentTimeMillis()-startTime));
+            layer.sendFromTop(m);
     }
 
     private static Host getHostToSendTo() {

@@ -2,7 +2,6 @@ package cs451.layers;
 
 import cs451.Message;
 
-import java.net.SocketTimeoutException;
 import java.util.ArrayDeque;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
@@ -34,7 +33,7 @@ public class PerfectLink extends Layer{
 
     public PerfectLink(Layer topLayer, String ip, int port, int timeout, int numberOfHosts){
         this.topLayer = topLayer;
-        fll = new FairLossLink(this,ip,port,timeout);
+        fll = new FairLossLink(this,ip,port);
         this.NUMBER_OF_HOSTS = numberOfHosts;
         waitingFor = new int [NUMBER_OF_HOSTS+1];
         for(int i=0; i<waitingFor.length ; i++)
@@ -45,7 +44,7 @@ public class PerfectLink extends Layer{
         mToSend = new ConcurrentLinkedDeque<>();
         messageToDeliver = new ConcurrentLinkedDeque<>();
     }
-
+/*
     @Override
     public Message deliver() throws SocketTimeoutException {
         Message m = fll.deliver();
@@ -59,7 +58,7 @@ public class PerfectLink extends Layer{
         return null;
     }
     
-    @Override
+*/
     public void send(Message m) {
         waitingToBeSent.addLast(m);
     }
@@ -68,7 +67,7 @@ public class PerfectLink extends Layer{
         timeoutInterval = Math.min(timeoutInterval*2, TIMEOUT_INTERVAL_MAX);
         timeouts.clear();
         for (Message me : windowMessages) {
-            fll.send(me);
+            //fll.send(me);
             timeouts.addLast(System.currentTimeMillis());
         }
     }
@@ -96,6 +95,11 @@ public class PerfectLink extends Layer{
         messageToDeliver.addLast(m);
     }
 
+    @Override
+    public void sendFromTop(Message m) {
+        mToSend.addLast(m);
+    }
+
     private class PLSendingThread implements Runnable {
 
         @Override
@@ -106,7 +110,7 @@ public class PerfectLink extends Layer{
                 }
                 while(!mToSend.isEmpty()){
                     Message m = mToSend.pollFirst();
-                    fll.send(m);
+                    //fll.send(m);
                     if(m.getMessageType() == Message.MessageType.MESSAGE){
                         windowMessages.addLast(m);
                         timeouts.addLast(System.currentTimeMillis());

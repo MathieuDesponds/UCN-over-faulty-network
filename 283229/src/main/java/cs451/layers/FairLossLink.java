@@ -7,7 +7,7 @@ import java.net.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class FairLossLink extends Layer {
-    private final int MAX_SIZE_PACKET = 32;
+    private final int MAX_SIZE_PACKET = 250; // it is between 217 and and 1 more for the sequence number with 1 more digit
     private DatagramSocket socket;
     private String ip;
     private int port;
@@ -20,7 +20,7 @@ public class FairLossLink extends Layer {
     public FairLossLink(Layer topLayer, String ip, int port){
         //Layers
         super.setTopLayer(topLayer);
-        super.setTopLayer(null);
+        super.setDownLayer(null);
 
         //Socket stuff
         this.ip = ip;
@@ -38,8 +38,9 @@ public class FairLossLink extends Layer {
 
         flST = new Thread(new FLSendingThread());
         flRT = new Thread(new FLReceivingThread());
-        flST.run();
-        flRT.run();
+        flRT.setDaemon(true); flST.setDaemon(true);
+        flST.start();
+        flRT.start();
     }
 
 
@@ -75,7 +76,6 @@ public class FairLossLink extends Layer {
      *      and send it
      */
     private class FLSendingThread implements Runnable {
-
         @Override
         public void run() {
             while(true){
@@ -86,9 +86,11 @@ public class FairLossLink extends Layer {
                         DatagramPacket packet = new DatagramPacket(result, result.length,
                                 InetAddress.getByName(m.getDstIP()), m.getDstPort());
                         socket.send(packet);
-                        //System.out.println("send pkt "+m.getSeqNumber()+" "+m.getSndID());
+                        System.out.println("send pkt "+m.getSeqNumber()+" "+m.getSndID());
                     } catch (UnknownHostException e) {
+                        e.printStackTrace();
                     } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 }
             }
@@ -116,6 +118,7 @@ public class FairLossLink extends Layer {
                     socket.receive(packet);
                     Message m = Message.deserializeFromBytes(packet.getData());
                     m.setAddress(packet.getAddress(), packet.getPort());
+                    System.out.println("receive pkt "+m.getSeqNumber()+" "+m.getSndID());
                     topLayer.deliveredFromBottom(m);
                 } catch (SocketTimeoutException e) {
                     e.printStackTrace();

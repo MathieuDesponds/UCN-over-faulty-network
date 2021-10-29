@@ -4,7 +4,7 @@ import cs451.Message;
 
 public abstract class Layer {
     protected Layer topLayer;
-    private Layer downLayer;
+    protected Layer downLayer;
 
     protected void setDownLayer(Layer downLayer) {
         this.downLayer = downLayer;

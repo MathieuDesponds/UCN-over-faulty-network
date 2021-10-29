@@ -27,6 +27,10 @@ public class Message implements Serializable {
         this.mt = mt;
         this.payload = payload;
     }
+    public Message(int sndID, String dstIP, int dstPort, int seqNumber, MessageType mt, String payload){
+        this("",-1,sndID,dstIP,dstPort,seqNumber,mt,payload);
+    }
+
 
     public String getSrcIP() {
         return srcIP;
@@ -78,8 +82,9 @@ public class Message implements Serializable {
 
     public static Message deserializeFromBytes(byte[] data){
         try(ByteArrayInputStream bais = new ByteArrayInputStream(data);
-            ObjectInputStream oi = new ObjectInputStream(bais)) {
-            return (Message) oi.readObject();
+            ObjectInputStream oi = new ObjectInputStream(bais);) {
+            Message m = (Message) oi.readObject();
+            return m;
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
             return null;

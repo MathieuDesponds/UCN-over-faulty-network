@@ -4,38 +4,36 @@ import cs451.Message;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OutputLink extends Link{
-    private Link link;
+public class OutputLayer extends Layer{
     private List<String> output;
     private String path;
 
-    public OutputLink(Link link, String path){
-        this.link = link;
+    public OutputLayer(Layer topLayer, String ip, int port, String path){
         this.path = path;
         output = new ArrayList<>();
-    }
-    @Override
-    public Message deliver() throws SocketTimeoutException {
-        Message m = link.deliver();
-        if(m != null)
-            output.add("d "+m.getSndID()+" "+m.getSeqNumber());
-        return m;
+        Layer downLayer = new FairLossLink(this, ip, port);
+        super.setDownLayer(downLayer);
+        super.setTopLayer(topLayer);
     }
 
     @Override
-    public void send(Message m) {
-        link.send(m);
+    public void deliveredFromBottom(Message m) {
+        output.add("d "+m.getSndID()+" "+m.getSeqNumber());
+    }
+
+    @Override
+    public void sendFromTop(Message m) {
+        downLayer.sendFromTop(m);
         output.add("b "+m.getSeqNumber());
     }
 
     @Override
     public void close() {
-        link.close();
         write();
+        downLayer.close();
 
     }
     public void write(){
