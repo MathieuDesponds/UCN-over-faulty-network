@@ -1,19 +1,20 @@
 package cs451.layers;
 
 import cs451.Message;
+import cs451.Parser;
 
-import java.util.ArrayDeque;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class PerfectLink extends Layer{
-    private FairLossLink fll;
-    private Layer topLayer;
+    private final int MY_ID;
     //Go-Back-N
-    private final int WINDOW = 10;
+    private final int WINDOW = 2;
     private final int NUMBER_OF_HOSTS;
     private int base = 1; //Seq number of the base --> seq n is at list(n-1)
-    private int nextSend = 1;
-    private long sendTime = 0;
+    private AtomicInteger mSentInWindow;
     private int [] waitingFor; //for receiver
 
     //TIMEOUT
@@ -23,53 +24,53 @@ public class PerfectLink extends Layer{
     private final int TIMEOUT_INTERVAL_MAX = 2500;
     private final double alpha = 0.25; //Recommended 0.125
     private final double beta = 0.25;
-    private ArrayDeque<Long> timeouts;
+    private ConcurrentLinkedDeque<Long> timeouts;
 
     //Thread
+    Thread plRT,plST,plTOT;
     private ConcurrentLinkedDeque<Message> mToSend;
     private ConcurrentLinkedDeque<Message> waitingToBeSent;
-    private ConcurrentLinkedDeque<Message> windowMessages;
-    private ConcurrentLinkedDeque<Message> messageToDeliver;
+    private ConcurrentLinkedDeque<Message> mToDeliver;
+    private ConcurrentLinkedDeque<Message> mOnTheRoad;
+    private AtomicBoolean stopSending;
 
-    public PerfectLink(Layer topLayer, String ip, int port, int timeout, int numberOfHosts){
-        this.topLayer = topLayer;
-        fll = new FairLossLink(this,ip,port);
-        this.NUMBER_OF_HOSTS = numberOfHosts;
-        waitingFor = new int [NUMBER_OF_HOSTS+1];
-        for(int i=0; i<waitingFor.length ; i++)
+    public PerfectLink(Layer topLayer, String ip, int port, Parser parser) {
+        super.setTopLayer(topLayer);
+        super.setDownLayer(new FairLossLink(this, ip, port));
+
+        this.MY_ID = parser.myId();
+        this.NUMBER_OF_HOSTS = parser.hosts().size();
+        waitingFor = new int[NUMBER_OF_HOSTS + 1];
+        for (int i = 0; i < waitingFor.length; i++)
             waitingFor[i] = 1;
-        windowMessages = new ConcurrentLinkedDeque<Message>();
-        timeouts = new ArrayDeque<>();
 
+        timeouts = new ConcurrentLinkedDeque<>();
+        waitingToBeSent = new ConcurrentLinkedDeque<>();
         mToSend = new ConcurrentLinkedDeque<>();
-        messageToDeliver = new ConcurrentLinkedDeque<>();
-    }
-/*
-    @Override
-    public Message deliver() throws SocketTimeoutException {
-        Message m = fll.deliver();
-        if(m != null && m.getSeqNumber() < waitingFor[m.getSndID()]) { //ReAcking
-            fll.send(new Message(m.getSrcIP(), m.getSrcPort(),m.getSndID(), m.getSeqNumber(), ""));
-        } else if(m != null && m.getSeqNumber() == waitingFor[m.getSndID()]) {
-            fll.send(new Message(m.getSrcIP(), m.getSrcPort(),m.getSndID(), m.getSeqNumber(), ""));
-            waitingFor[m.getSndID()]++;
-            return m;
-        }
-        return null;
-    }
-    
-*/
-    public void send(Message m) {
-        waitingToBeSent.addLast(m);
+        mOnTheRoad = new ConcurrentLinkedDeque<>();
+        mToDeliver = new ConcurrentLinkedDeque<>();
+
+        mSentInWindow = new AtomicInteger(0);
+        stopSending = new AtomicBoolean(false);
+        plRT = new Thread(new PLReceivingThread());
+        plST = new Thread(new PLSendingThread(stopSending));
+        plTOT = new Thread(new PLTimeoutThread());
+        plRT.setDaemon(true);
+        plST.setDaemon(true);
+        plTOT.setDaemon(true);
+        plST.start();
+        plRT.start();
+        plTOT.start();
     }
 
     private void timeout() {
-        timeoutInterval = Math.min(timeoutInterval*2, TIMEOUT_INTERVAL_MAX);
+        timeoutInterval = timeoutInterval*2;
         timeouts.clear();
-        for (Message me : windowMessages) {
-            //fll.send(me);
-            timeouts.addLast(System.currentTimeMillis());
+        stopSending.set(true);
+        for (int i = 0 ; i < mSentInWindow.get() ;i++) {
+            mToSend.addFirst(mOnTheRoad.pollLast());
         }
+        stopSending.set(false);
     }
 
     private void updateTimeout(Long timeSent) {
@@ -77,42 +78,40 @@ public class PerfectLink extends Layer{
         estimatedRTT = (int) ((1-alpha) * estimatedRTT + alpha * sampleRtt);
         deviationRTT = (int) ((1-beta) * deviationRTT + beta * Math.abs(sampleRtt-estimatedRTT));
         timeoutInterval = estimatedRTT + 2*deviationRTT;
-        fll.setTimeOut(timeoutInterval);
-    }
-
-    private void checkTimeoutGoBackN() {
-        if(System.currentTimeMillis()-timeouts.getFirst() > timeoutInterval)
-            timeout();
     }
 
     @Override
     public void close(){
-        fll.close();
+        downLayer.close();
     }
 
     @Override
     public void deliveredFromBottom(Message m) {
-        messageToDeliver.addLast(m);
+        mToDeliver.addLast(m);
     }
 
     @Override
     public void sendFromTop(Message m) {
-        mToSend.addLast(m);
+        waitingToBeSent.addLast(m);
     }
 
     private class PLSendingThread implements Runnable {
-
+        private AtomicBoolean stopSending;
+        private PLSendingThread(AtomicBoolean stopSending){
+            this.stopSending = stopSending;
+        }
         @Override
         public void run() {
             while(true){
-                while(windowMessages.size() < WINDOW){
+                while(mSentInWindow.get() < WINDOW && !waitingToBeSent.isEmpty()){
                     mToSend.addLast(waitingToBeSent.pollFirst());
+                    mSentInWindow.incrementAndGet();
                 }
-                while(!mToSend.isEmpty()){
+                while(!stopSending.get() && !mToSend.isEmpty()){
                     Message m = mToSend.pollFirst();
-                    //fll.send(m);
+                    downLayer.sendFromTop(m);
                     if(m.getMessageType() == Message.MessageType.MESSAGE){
-                        windowMessages.addLast(m);
+                        mOnTheRoad.addLast(m);
                         timeouts.addLast(System.currentTimeMillis());
                     }
                 }
@@ -125,14 +124,21 @@ public class PerfectLink extends Layer{
         @Override
         public void run() {
             while(true){
-                if(!messageToDeliver.isEmpty()){
-                    Message m = messageToDeliver.pollFirst();
+                if(!mToDeliver.isEmpty()){
+                    Message m = mToDeliver.pollFirst();
                     if(m.getMessageType() == Message.MessageType.MESSAGE){
-                        topLayer.deliveredFromBottom(m);
+                        if(m.getSeqNumber() < waitingFor[m.getSrcID()]) { //ReAcking because ack got lost
+                            ackMessage(m);
+                        }else if(m.getSeqNumber() == waitingFor[m.getSrcID()]) {
+                            waitingFor[m.getSrcID()]++;
+                            topLayer.deliveredFromBottom(m);
+                            //send ack
+                            ackMessage(m);
+                        }
                     }else if(m.getMessageType() == Message.MessageType.ACK){
                         if (m.getSeqNumber() == base) {
-                            //System.out.println("ack " + m.getSeqNumber());
-                            windowMessages.removeFirst();
+                            mOnTheRoad.removeFirst();
+                            mSentInWindow.decrementAndGet();
                             updateTimeout(timeouts.getFirst());
                             timeouts.removeFirst();
                             base++;
@@ -140,6 +146,27 @@ public class PerfectLink extends Layer{
                     }
                 }
             }
+        }
+        private void ackMessage(Message m){
+            Message ack = new Message(m.getDstIP(), m.getDstPort(), MY_ID, m.getSrcIP(), m.getSrcPort(),
+                    m.getSeqNumber(), Message.MessageType.ACK, "");
+            mToSend.addLast(ack);
+        }
+    }
+
+    private class PLTimeoutThread implements Runnable{
+
+        @Override
+        public void run() {
+            while(true){
+                checkTimeoutGoBackN();
+            }
+        }
+        private void checkTimeoutGoBackN() {
+            try {
+                if (!timeouts.isEmpty() && System.currentTimeMillis() - timeouts.getFirst() > timeoutInterval)
+                    timeout();
+            }catch(NoSuchElementException e){}
         }
     }
 }

@@ -71,9 +71,9 @@ public class Main {
 
         //See if we are the host to send to
         if(myId == hostToSend.getId()){
-            layer = new OutputLayer(null, me.getIp(), me.getPort(), parser.output());
+            layer = new OutputLayer(null, me.getIp(), me.getPort(), parser);
         }else{
-            layer = new OutputLayer(null, me.getIp(), me.getPort(), parser.output());
+            layer = new OutputLayer(null, me.getIp(), me.getPort(), parser);
             sender(parser.configNbMessage(), hostToSend, myId);
         }
 
@@ -93,8 +93,11 @@ public class Main {
     private static void sender(int configNbMessage, Host hostToSend, int myID) {
         //Preparation of the sended messages
         List<Message> lm = new ArrayList<Message>();
+        Host me = getMe();
+        String myIp = me.getIp();
+        int myPort = me.getPort();
         for(int i = 1; i<=configNbMessage; ++i) {
-            lm.add(new Message(myID, hostToSend.getIp(), hostToSend.getPort(), i, Message.MessageType.MESSAGE, "AAAA" + i));
+            lm.add(new Message(myIp, myPort, myID, hostToSend.getIp(), hostToSend.getPort(), i, Message.MessageType.MESSAGE, "AAAA" + i));
         }
         //Sending messages
 

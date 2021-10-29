@@ -6,31 +6,27 @@ import java.net.InetAddress;
 public class Message implements Serializable {
     public enum MessageType {MESSAGE, ACK};
 
-    private int sndID;
+    private int srcID;
     private int seqNumber;
     private MessageType mt;
     private String payload;
 
-    private transient String srcIP;
-    private transient int srcPort;
+    private String srcIP;
+    private int srcPort;
     private transient String dstIP;
     private transient int dstPort;
 
 
-    public Message(String srcIP, int srcPort, int sndID, String dstIP, int dstPort, int seqNumber, MessageType mt, String payload){
+    public Message(String srcIP, int srcPort, int srcID, String dstIP, int dstPort, int seqNumber, MessageType mt, String payload){
         this.srcIP = srcIP;
         this.srcPort = srcPort;
-        this.sndID = sndID;
+        this.srcID = srcID;
         this.dstIP = dstIP;
         this.dstPort = dstPort;
         this.seqNumber = seqNumber;
         this.mt = mt;
         this.payload = payload;
     }
-    public Message(int sndID, String dstIP, int dstPort, int seqNumber, MessageType mt, String payload){
-        this("",-1,sndID,dstIP,dstPort,seqNumber,mt,payload);
-    }
-
 
     public String getSrcIP() {
         return srcIP;
@@ -56,17 +52,17 @@ public class Message implements Serializable {
         return payload;
     }
 
-    public int getSndID() {
-        return sndID;
+    public int getSrcID() {
+        return srcID;
     }
 
     public MessageType getMessageType() {
         return mt;
     }
 
-    public void setAddress(InetAddress address, int port) {
-        this.dstIP = address.getHostName();
-        this.dstPort = port;
+    public void setAddress(InetAddress dstaddress, int dstport) {
+        this.dstIP = dstaddress.getHostName();
+        this.dstPort = dstport;
     }
 
     public  byte[] serializeToBytes(){
