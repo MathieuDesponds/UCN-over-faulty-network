@@ -89,6 +89,7 @@ public class PerfectLink extends Layer{
 
     @Override
     public void close(){
+        closed = true;
         downLayer.close();
     }
 
@@ -105,7 +106,7 @@ public class PerfectLink extends Layer{
     private class PLSendingThread implements Runnable {
         @Override
         public void run() {
-            while(true){
+            while(!closed){
                 while(!waitingToBeSent.isEmpty()){
                     mToSend.addLast(waitingToBeSent.pollFirst());
                 }
@@ -126,7 +127,7 @@ public class PerfectLink extends Layer{
         @Override
         public void run() {
             int i = 0;
-            while(true){
+            while(!closed){
                 if(!mToDeliver.isEmpty()){
                     Message m = mToDeliver.pollFirst();
                     if(m.getMessageType() == Message.MessageType.MESSAGE){
@@ -154,7 +155,7 @@ public class PerfectLink extends Layer{
 
         @Override
         public void run() {
-            while(true){
+            while(!closed){
                 long time = System.currentTimeMillis();
                 int to = timeoutInterval;
                 Set<Message> s = new HashSet<>(mOnTheRoad.keySet());

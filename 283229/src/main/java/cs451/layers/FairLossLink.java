@@ -64,6 +64,7 @@ public class FairLossLink extends Layer {
 
     @Override
     public void close() {
+        closed = true;
         flRT.interrupt();
         flST.interrupt();
         socket.close();
@@ -78,7 +79,7 @@ public class FairLossLink extends Layer {
     private class FLSendingThread implements Runnable {
         @Override
         public void run() {
-            while(true){
+            while(!closed){
                 if(!mToSend.isEmpty()) {
                     Message m = mToSend.pollFirst();
                     byte[] result = m.serializeToBytes();
@@ -86,8 +87,8 @@ public class FairLossLink extends Layer {
                         DatagramPacket packet = new DatagramPacket(result, result.length,
                                 InetAddress.getByName(m.getDstIP()), m.getDstPort());
                         socket.send(packet);
-                        System.out.println("send "+m);
-                    } catch (UnknownHostException e) {
+                        //System.out.println("send "+m);
+                    } catch (UnknownHostException | SocketException e) {
                         e.printStackTrace();
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -113,12 +114,12 @@ public class FairLossLink extends Layer {
         }
         @Override
         public void run() {
-            while(true){
+            while(!closed){
                 try {
                     socket.receive(packet);
                     Message m = Message.deserializeFromBytes(packet.getData());
                     m.setAddress(InetAddress.getByName(ip), port);
-                    System.out.println("receive "+m);
+                    //System.out.println("receive "+m);
                     topLayer.deliveredFromBottom(m);
                 } catch (SocketTimeoutException e) {
                     e.printStackTrace();

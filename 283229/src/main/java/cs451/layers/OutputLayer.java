@@ -11,6 +11,7 @@ import java.util.List;
 public class OutputLayer extends Layer{
     private List<String> output;
     private String path;
+    private boolean closed = false;
 
     public OutputLayer(Layer topLayer, String ip, int port, Parser parser){
         this.path = parser.output();
@@ -22,19 +23,23 @@ public class OutputLayer extends Layer{
 
     @Override
     public void deliveredFromBottom(Message m) {
-        output.add("d "+m.getSrcID()+" "+m.getSeqNumber());
+        if(!closed) {
+            output.add("d " + m.getSrcID() + " " + m.getSeqNumber());
+        }
     }
 
     @Override
     public void sendFromTop(Message m) {
-        downLayer.sendFromTop(m);
-        output.add("b "+m.getSeqNumber());
+        if(!closed) {
+            downLayer.sendFromTop(m);
+            output.add("b " + m.getSeqNumber());
+        }
     }
 
     @Override
     public void close() {
-        write();
         downLayer.close();
+        write();
 
     }
     public void write(){

@@ -5,6 +5,7 @@ import cs451.Message;
 public abstract class Layer {
     protected Layer topLayer;
     protected Layer downLayer;
+    protected boolean closed = false;
 
     protected void setDownLayer(Layer downLayer) {
         this.downLayer = downLayer;
