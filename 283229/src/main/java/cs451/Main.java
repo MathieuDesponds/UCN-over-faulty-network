@@ -97,7 +97,7 @@ public class Main {
         String myIp = me.getIp();
         int myPort = me.getPort();
         for(int i = 1; i<=configNbMessage; ++i) {
-            lm.add(new Message(myIp, myPort, myID, hostToSend.getIp(), hostToSend.getPort(), i, Message.MessageType.MESSAGE, "AAAA" + i));
+            lm.add(new Message(myIp, myPort, myID, hostToSend.getId(), hostToSend.getIp(), hostToSend.getPort(), i, Message.MessageType.MESSAGE, "AAAA" + i));
         }
         //Sending messages
 
