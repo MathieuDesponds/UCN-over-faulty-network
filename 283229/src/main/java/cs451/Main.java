@@ -9,8 +9,6 @@ import java.util.List;
 public class Main {
     private static Parser parser;
     private static Layer layer;
-    private static final int TIMEOUT_SENDER =500;
-    private static final int TIMEOUT_RECEIVER = 50000;
 
     private static void handleSignal() {
         //immediately stop network packet processing
@@ -33,6 +31,8 @@ public class Main {
         parser = new Parser(args);
         parser.parse();
         initSignalHandlers();
+
+        layer = new OutputLayer(null, parser);
 
         // example
         long pid = ProcessHandle.current().pid();
@@ -60,22 +60,11 @@ public class Main {
 
         System.out.println("Doing some initialization\n");
 
-        Host hostToSend = getHostToSendTo();
-        Host me = getMe();
-        int myId = me.getId();
-
-        // Tell what is the link
-
+        List<Message> lm = instantiateMessages();
 
         System.out.println("Broadcasting and delivering messages...\n");
 
-        //See if we are the host to send to
-        if(myId == hostToSend.getId()){
-            layer = new OutputLayer(null, me.getIp(), me.getPort(), parser);
-        }else{
-            layer = new OutputLayer(null, me.getIp(), me.getPort(), parser);
-            sender(parser.configNbMessage(), hostToSend, myId);
-        }
+        send(lm);
 
         // After a process finishes broadcasting,
         // it waits forever for the delivery of messages.
@@ -85,40 +74,22 @@ public class Main {
         }
     }
 
+    private static List<Message> instantiateMessages() {
+        List<Message> lm = new ArrayList<Message>();
+        int configNbMessage = parser.configNbMessage();
+        for(int i = 1; i<=configNbMessage; ++i) {
+            lm.add(new Message(i, Message.MessageType.MESSAGE, "AAAA" + i));
+        }
+        return lm;
+    }
+
     private static void close() {
         layer.close();
     }
 
 
-    private static void sender(int configNbMessage, Host hostToSend, int myID) {
-        //Preparation of the sended messages
-        List<Message> lm = new ArrayList<Message>();
-        Host me = getMe();
-        String myIp = me.getIp();
-        int myPort = me.getPort();
-        for(int i = 1; i<=configNbMessage; ++i) {
-            lm.add(new Message(myIp, myPort, myID, hostToSend.getId(), hostToSend.getIp(), hostToSend.getPort(), i, Message.MessageType.MESSAGE, "AAAA" + i));
-        }
-        //Sending messages
-
+    private static void send(List<Message> lm) {
         for(Message m :lm)
             layer.sendFromTop(m);
-    }
-
-    private static Host getHostToSendTo() {
-        int idToSend = parser.configIdToSend();
-        for(Host h : parser.hosts()){
-            if(h.getId()==idToSend)
-                return h;
-        }
-        return null;
-    }
-    private static Host getMe() {
-        int myId = parser.myId();
-        for(Host h : parser.hosts()){
-            if(h.getId()==myId)
-                return h;
-        }
-        return null;
     }
 }

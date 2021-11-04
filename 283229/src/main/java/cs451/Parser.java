@@ -69,11 +69,17 @@ public class Parser {
     public String config() {
         return configParser.getPath();
     }
-    public int configIdToSend() {
-        return configParser.getIdToSend();
-    }
 
     public int configNbMessage() {
         return configParser.getNbMessage();
+    }
+
+    public Host getMe() {
+        int myId = myId();
+        for(Host h : hosts()){
+            if(h.getId()==myId)
+                return h;
+        }
+        return null;
     }
 }

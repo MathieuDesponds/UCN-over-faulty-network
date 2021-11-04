@@ -13,10 +13,10 @@ public class OutputLayer extends Layer{
     private String path;
     private boolean closed = false;
 
-    public OutputLayer(Layer topLayer, String ip, int port, Parser parser){
+    public OutputLayer(Layer topLayer, Parser parser){
         this.path = parser.output();
         output = new ArrayList<>();
-        Layer downLayer = new PerfectLink(this, ip, port, parser);
+        Layer downLayer = new BestEffortBroadcast(this, parser);
         super.setDownLayer(downLayer);
         super.setTopLayer(topLayer);
     }
@@ -38,10 +38,10 @@ public class OutputLayer extends Layer{
 
     @Override
     public void close() {
-        downLayer.close();
+        super.close();
         write();
-
     }
+
     public void write(){
         try {
             FileWriter writer = new FileWriter(path);

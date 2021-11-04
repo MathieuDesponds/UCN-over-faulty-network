@@ -87,11 +87,6 @@ public class PerfectLink extends Layer{
         timeoutInterval = estimatedRTT + 2*deviationRTT;
     }
 
-    @Override
-    public void close(){
-        closed = true;
-        downLayer.close();
-    }
 
     @Override
     public void deliveredFromBottom(Message m) {
@@ -100,16 +95,18 @@ public class PerfectLink extends Layer{
 
     @Override
     public void sendFromTop(Message m) {
-        waitingToBeSent.addLast(m);
+        // vestige of windows  : waitingToBeSent.addLast(m);
+        mToSend.addLast(m);
     }
 
     private class PLSendingThread implements Runnable {
         @Override
         public void run() {
             while(!closed){
+                /* Vestige of windowing
                 while(!waitingToBeSent.isEmpty()){
                     mToSend.addLast(waitingToBeSent.pollFirst());
-                }
+                }*/
                 while(!mToSend.isEmpty()){
                     Message m = mToSend.pollFirst();
                     if(m.getMessageType() == Message.MessageType.MESSAGE){

@@ -25,5 +25,9 @@ public abstract class Layer {
      * @param m
      */
     public abstract void sendFromTop(Message m);
-    public abstract void close();
+
+    public void close(){
+        closed = true;
+        downLayer.close();
+    }
 }

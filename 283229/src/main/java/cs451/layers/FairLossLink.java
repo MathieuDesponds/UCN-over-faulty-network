@@ -87,9 +87,9 @@ public class FairLossLink extends Layer {
                         DatagramPacket packet = new DatagramPacket(result, result.length,
                                 InetAddress.getByName(m.getDstIP()), m.getDstPort());
                         socket.send(packet);
-                        //System.out.println("send "+m);
+                        System.out.println("send "+m);
                     } catch (UnknownHostException | SocketException e) {
-                        e.printStackTrace();
+                        //e.printStackTrace();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

@@ -8,7 +8,6 @@ public class ConfigParser {
 
     private String path;
     private int nbMessage;
-    private int idToSend;
 
     public boolean populate(String value) {
         File file = new File(value);
@@ -17,7 +16,6 @@ public class ConfigParser {
         try {
             scanner = new Scanner(file);
             nbMessage = scanner.nextInt();
-            idToSend = scanner.nextInt();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -26,10 +24,6 @@ public class ConfigParser {
 
     public String getPath() {
         return path;
-    }
-
-    public int getIdToSend() {
-        return idToSend;
     }
 
     public int getNbMessage() {

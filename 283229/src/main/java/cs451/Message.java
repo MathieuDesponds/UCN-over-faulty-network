@@ -5,8 +5,18 @@ import java.net.InetAddress;
 import java.util.Objects;
 
 public class Message implements Serializable {
+
+    public Message(Message m) {
+        this(m.srcIP,m.srcPort,m.srcID,m.dstID,m.dstIP,m.dstPort,m.seqNumber,m.mt,m.payload, m.timeSent);
+    }
+
     public Message mThatIsAcked() {
         return new Message(this.dstID, this.srcID, this.seqNumber, MessageType.MESSAGE);
+    }
+
+    public void setClientServer(String srcIp, int srcPort, int srcID, String dstIP, int dstPort, int dstID) {
+        this.srcIP = srcIp; this.srcPort = srcPort; this.srcID = srcID;
+        this.dstIP = dstIP; this.dstPort = dstPort; this.dstID = dstID;
     }
 
     public enum MessageType {MESSAGE, ACK};
@@ -43,6 +53,10 @@ public class Message implements Serializable {
 
     private Message(int srcID, int dstID, int seqNumber, MessageType mt){
         this("",-1,srcID,dstID,"",-1,seqNumber,mt,"");
+    }
+
+    public Message(int seqNumber, MessageType mt, String payload) {
+        this("",-1,-1,-1,"",-1,seqNumber,mt,payload);
     }
 
     public String getSrcIP() {
