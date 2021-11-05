@@ -16,20 +16,20 @@ public class OutputLayer extends Layer{
     public OutputLayer(Layer topLayer, Parser parser){
         this.path = parser.output();
         output = new ArrayList<>();
-        Layer downLayer = new BestEffortBroadcast(this, parser);
+        Layer downLayer = new UniformReliableBroadcast(this, parser);
         super.setDownLayer(downLayer);
         super.setTopLayer(topLayer);
     }
 
     @Override
-    public void deliveredFromBottom(Message m) {
+    public <BroadcastMessage extends Message> void deliveredFromBottom(BroadcastMessage m) {
         if(!closed) {
-            output.add("d " + m.getSrcID() + " " + m.getSeqNumber());
+            output.add("d " + m.getBroadcasterID() + " " + m.getSeqNumber());
         }
     }
 
     @Override
-    public void sendFromTop(Message m) {
+    public <BroadcastMessage extends Message> void  sendFromTop(BroadcastMessage m) {
         if(!closed) {
             downLayer.sendFromTop(m);
             output.add("b " + m.getSeqNumber());

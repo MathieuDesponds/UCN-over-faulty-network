@@ -1,5 +1,6 @@
 package cs451.layers;
 
+import cs451.BroadcastMessage;
 import cs451.Host;
 import cs451.Message;
 import cs451.Parser;
@@ -8,16 +9,18 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class BestEffortBroadcast extends Layer {
+    private final int MY_ID;
     private List<Host> hosts;
     private String ip;
     private int port;
     private int id;
 
     Thread bebST;
-    private ConcurrentLinkedDeque<Message> mToSend;
+    private ConcurrentLinkedDeque<BroadcastMessage> mToSend;
 
     public BestEffortBroadcast(Layer topLayer, Parser parser){
-        Host me = parser.getHostWithId(parser.myId());
+        MY_ID = parser.myId();
+        Host me = parser.getHostWithId(MY_ID);
         this.ip = me.getIp(); this.port = me.getPort(); this.id = me.getId();
 
         hosts = parser.hosts();
@@ -34,12 +37,13 @@ public class BestEffortBroadcast extends Layer {
 
     @Override
     public void deliveredFromBottom(Message m) {
-        topLayer.deliveredFromBottom(m);
+        System.out.println("receive"+m);
+        topLayer.deliveredFromBottom(new BroadcastMessage(m));
     }
 
     @Override
-    public void sendFromTop(Message m) {
-        mToSend.addLast(m);
+    public <BroadcastMessage extends Message> void  sendFromTop(BroadcastMessage m) {
+        mToSend.addLast((cs451.BroadcastMessage) m);
     }
 
     private class BEBSendingThread implements Runnable {
@@ -47,12 +51,14 @@ public class BestEffortBroadcast extends Layer {
         public void run() {
             while(!closed){
                 if(!mToSend.isEmpty()) {
-                    Message m = mToSend.pollFirst();
+                    BroadcastMessage m = mToSend.pollFirst();
                     for (Host h : hosts) {
                         m.setClientServer(id, h.getId());
+                        System.out.println("send"+m);
                         downLayer.sendFromTop(new Message(m));
                     }
-                    deliveredFromBottom(m);
+                    if(m.getBroadcasterID() == MY_ID)
+                        deliveredFromBottom(m);
                 }
             }
         }

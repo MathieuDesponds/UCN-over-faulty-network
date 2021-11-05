@@ -18,13 +18,13 @@ public abstract class Layer {
     /**
      * The layer that is bottom me can call this function to give me a message it delivered
      */
-    public abstract void deliveredFromBottom(Message m);
+    public abstract  <T extends Message> void deliveredFromBottom(T m);
 
     /**
      * The layer that is upon me can call this function to give me a message it wants to send
      * @param m
      */
-    public abstract void sendFromTop(Message m);
+    public abstract  <T extends Message> void sendFromTop(T m);
 
     public void close(){
         closed = true;

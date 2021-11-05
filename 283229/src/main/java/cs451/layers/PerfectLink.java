@@ -134,7 +134,7 @@ public class PerfectLink extends Layer{
                         }
                         ackMessage(m);
                     }else if(m.getMessageType() == Message.MessageType.ACK){
-                        mOnTheRoad.remove(m.getAckedMessage());
+                        mOnTheRoad.remove(m.getAckedMessageToHash());
                         mSentInWindow.decrementAndGet();
                         updateTimeout(m.getTimeSent());
                     }

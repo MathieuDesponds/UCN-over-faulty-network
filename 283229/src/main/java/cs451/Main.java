@@ -60,7 +60,7 @@ public class Main {
 
         System.out.println("Doing some initialization\n");
 
-        List<Message> lm = instantiateMessages();
+        List<BroadcastMessage> lm = instantiateMessages();
 
         System.out.println("Broadcasting and delivering messages...\n");
 
@@ -74,11 +74,11 @@ public class Main {
         }
     }
 
-    private static List<Message> instantiateMessages() {
-        List<Message> lm = new ArrayList<Message>();
+    private static List<BroadcastMessage> instantiateMessages() {
+        List<BroadcastMessage> lm = new ArrayList<BroadcastMessage>();
         int configNbMessage = parser.configNbMessage();
         for(int i = 1; i<=configNbMessage; ++i) {
-            lm.add(new Message(i, Message.MessageType.MESSAGE, ""));
+            lm.add(new BroadcastMessage(i, Message.MessageType.MESSAGE, ""));
         }
         return lm;
     }
@@ -88,8 +88,8 @@ public class Main {
     }
 
 
-    private static void send(List<Message> lm) {
-        for(Message m :lm)
+    private static void send(List<BroadcastMessage> lm) {
+        for(BroadcastMessage m :lm)
             layer.sendFromTop(m);
     }
 }
