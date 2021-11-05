@@ -17,7 +17,7 @@ public class BestEffortBroadcast extends Layer {
     private ConcurrentLinkedDeque<Message> mToSend;
 
     public BestEffortBroadcast(Layer topLayer, Parser parser){
-        Host me = parser.getMe();
+        Host me = parser.getHostWithId(parser.myId());
         this.ip = me.getIp(); this.port = me.getPort(); this.id = me.getId();
 
         hosts = parser.hosts();

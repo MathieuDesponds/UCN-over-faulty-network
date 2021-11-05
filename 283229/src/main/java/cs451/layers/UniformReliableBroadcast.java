@@ -7,13 +7,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 public class UniformReliableBroadcast extends Layer {
-
+    private final int MY_ID;
     //ToDo make it concurrent
     private HashSet<Message> mDelivered;
     private HashSet<Message> mPending;
     private HashMap<Message, Integer> mAcked;
 
     public UniformReliableBroadcast(Layer topLayer, Parser parser){
+        MY_ID = parser.myId();
         Layer downLayer = new BestEffortBroadcast(this, parser);
         super.setDownLayer(downLayer);
         super.setTopLayer(topLayer);

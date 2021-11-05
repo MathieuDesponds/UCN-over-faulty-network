@@ -38,8 +38,11 @@ public final class Message implements Serializable {
         this(m.srcID,m.dstID,m.seqNumber,m.mt,m.payload, m.timeSent);
     }
 
-    public Message mThatIsAcked() {
+    public Message getAckedMessage() {
         return new Message(this.dstID, this.srcID, this.seqNumber, MessageType.MESSAGE);
+    }
+    public Message getAckingMessage() {
+        return new Message(this.dstID, this.srcID, this.seqNumber, MessageType.ACK, "", this.timeSent);
     }
 
     public void setClientServer(int srcID, int dstID) {
