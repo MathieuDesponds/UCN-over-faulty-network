@@ -15,6 +15,15 @@ public class BroadcastMessage extends Message {
         super(seqNumber, mt, payload);
     }
 
+
+    public int getBroadcasterID() {
+        return broadcasterID;
+    }
+
+    public void setBroadcasterID(int broadcasterID) {
+        this.broadcasterID = broadcasterID;
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(broadcasterID, seqNumber);

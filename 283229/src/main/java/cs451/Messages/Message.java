@@ -86,19 +86,11 @@ public class Message implements Serializable {
         return timeSent;
     }
 
-    public int getBroadcasterID() {
-        return broadcasterID;
-    }
-
-    public void setBroadcasterID(int broadcasterID) {
-        this.broadcasterID = broadcasterID;
-    }
-
     public void setTimeSent(long timeSent) {
         this.timeSent = timeSent;
     }
 
-    public  byte[] serializeToBytes(){
+    public byte[] serializeToBytes(){
         try(ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(baos)){
             oos.writeObject(this);

@@ -1,5 +1,6 @@
 package cs451.layers;
 
+import cs451.Messages.BroadcastMessage;
 import cs451.Messages.Message;
 import cs451.Parsing.Parser;
 
@@ -22,9 +23,9 @@ public class OutputLayer extends Layer{
     }
 
     @Override
-    public <BroadcastMessage extends Message> void deliveredFromBottom(BroadcastMessage m) {
+    public <BM extends Message> void deliveredFromBottom(BM m) {
         if(!closed) {
-            output.add("d " + m.getBroadcasterID() + " " + m.getSeqNumber());
+            output.add("d " + ((BroadcastMessage)m).getBroadcasterID() + " " + m.getSeqNumber());
         }
     }
 

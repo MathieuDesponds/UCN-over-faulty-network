@@ -36,7 +36,7 @@ public class UniformReliableBroadcast extends Layer {
     public <BM extends Message> void  deliveredFromBottom(BM m) {
         if(!mDelivered.containsKey(m)) {
             int count = mPendingToBeAcked.getOrDefault(m, 0);
-            if(count == 0 && m.getBroadcasterID() != MY_ID) {
+            if(count == 0 && ((BroadcastMessage) m).getBroadcasterID() != MY_ID) {
                 count++; //We know that already 2 (respectively me and the one that sent it) can deliver
                 downLayer.sendFromTop(m);
             }
@@ -45,8 +45,8 @@ public class UniformReliableBroadcast extends Layer {
     }
 
     @Override
-    public void sendFromTop(Message m) {
-        m.setBroadcasterID(MY_ID);
+    public <BM extends Message> void sendFromTop(BM m) {
+        ((BroadcastMessage) m).setBroadcasterID(MY_ID);
         downLayer.sendFromTop(m);
     }
 
