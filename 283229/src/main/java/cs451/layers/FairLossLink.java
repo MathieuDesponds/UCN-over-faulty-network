@@ -1,6 +1,8 @@
 package cs451.layers;
 
+import cs451.Host;
 import cs451.Message;
+import cs451.Parser;
 
 import java.io.IOException;
 import java.net.*;
@@ -11,13 +13,14 @@ public class FairLossLink extends Layer {
     private DatagramSocket socket;
     private String ip;
     private int port;
+    private Parser parser;
 
     //Threads
     private ConcurrentLinkedDeque<Message> mToSend;
     Thread flST;
     Thread flRT;
 
-    public FairLossLink(Layer topLayer, String ip, int port){
+    public FairLossLink(Layer topLayer, String ip, int port, Parser parser){
         //Layers
         super.setTopLayer(topLayer);
         super.setDownLayer(null);
@@ -25,6 +28,7 @@ public class FairLossLink extends Layer {
         //Socket stuff
         this.ip = ip;
         this.port = port;
+        this.parser = parser;
         try {
             InetAddress inetAddress = InetAddress.getByName(ip);
             socket = new DatagramSocket(port, inetAddress);
@@ -82,10 +86,8 @@ public class FairLossLink extends Layer {
             while(!closed){
                 if(!mToSend.isEmpty()) {
                     Message m = mToSend.pollFirst();
-                    byte[] result = m.serializeToBytes();
                     try {
-                        DatagramPacket packet = new DatagramPacket(result, result.length,
-                                InetAddress.getByName(m.getDstIP()), m.getDstPort());
+                        DatagramPacket packet = getPacketFromMessage(m);
                         socket.send(packet);
                         System.out.println("send "+m);
                     } catch (UnknownHostException | SocketException e) {
@@ -95,6 +97,13 @@ public class FairLossLink extends Layer {
                     }
                 }
             }
+        }
+        private DatagramPacket getPacketFromMessage(Message m) throws UnknownHostException {
+            byte[] result = m.serializeToBytes();
+            Host dst = parser.getHostWithId(m.getDstID());
+            DatagramPacket pkt = new DatagramPacket(result, result.length,
+                    InetAddress.getByName(dst.getIp()), dst.getPort());
+            return pkt;
         }
     }
 
@@ -118,7 +127,6 @@ public class FairLossLink extends Layer {
                 try {
                     socket.receive(packet);
                     Message m = Message.deserializeFromBytes(packet.getData());
-                    m.setAddress(InetAddress.getByName(ip), port);
                     //System.out.println("receive "+m);
                     topLayer.deliveredFromBottom(m);
                 } catch (SocketTimeoutException e) {

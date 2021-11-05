@@ -1,24 +1,9 @@
 package cs451;
 
 import java.io.*;
-import java.net.InetAddress;
 import java.util.Objects;
 
-public class Message implements Serializable {
-
-    public Message(Message m) {
-        this(m.srcIP,m.srcPort,m.srcID,m.dstID,m.dstIP,m.dstPort,m.seqNumber,m.mt,m.payload, m.timeSent);
-    }
-
-    public Message mThatIsAcked() {
-        return new Message(this.dstID, this.srcID, this.seqNumber, MessageType.MESSAGE);
-    }
-
-    public void setClientServer(String srcIp, int srcPort, int srcID, String dstIP, int dstPort, int dstID) {
-        this.srcIP = srcIp; this.srcPort = srcPort; this.srcID = srcID;
-        this.dstIP = dstIP; this.dstPort = dstPort; this.dstID = dstID;
-    }
-
+public final class Message implements Serializable {
     public enum MessageType {MESSAGE, ACK};
 
     private int srcID;
@@ -28,51 +13,38 @@ public class Message implements Serializable {
     private String payload;
     private long timeSent;
 
-    private String srcIP;
-    private int srcPort;
-    private transient String dstIP;
-    private transient int dstPort;
 
-    public Message(String srcIP, int srcPort, int srcID, int dstID, String dstIP, int dstPort, int seqNumber,
-                   MessageType mt, String payload, long timeSent){
-        this.srcIP = srcIP;
-        this.srcPort = srcPort;
+    public Message(int srcID, int dstID, int seqNumber, MessageType mt, String payload, long timeSent){
         this.srcID = srcID;
         this.dstID = dstID;
-        this.dstIP = dstIP;
-        this.dstPort = dstPort;
         this.seqNumber = seqNumber;
         this.mt = mt;
         this.timeSent = timeSent;
         this.payload = payload;
         this.timeSent = timeSent;
     }
-    public Message(String srcIP, int srcPort, int srcID, int dstID, String dstIP, int dstPort, int seqNumber, MessageType mt, String payload){
-        this(srcIP,srcPort,srcID,dstID,dstIP,dstPort,seqNumber,mt,payload, -1);
+    public Message(int srcID, int dstID, int seqNumber, MessageType mt, String payload){
+        this(srcID,dstID,seqNumber,mt,payload, -1);
     }
 
     private Message(int srcID, int dstID, int seqNumber, MessageType mt){
-        this("",-1,srcID,dstID,"",-1,seqNumber,mt,"");
+        this(srcID,dstID,seqNumber,mt,"");
     }
 
     public Message(int seqNumber, MessageType mt, String payload) {
-        this("",-1,-1,-1,"",-1,seqNumber,mt,payload);
+        this(-1,-1,seqNumber,mt,payload);
+    }
+    public Message(Message m) {
+        this(m.srcID,m.dstID,m.seqNumber,m.mt,m.payload, m.timeSent);
     }
 
-    public String getSrcIP() {
-        return srcIP;
+    public Message mThatIsAcked() {
+        return new Message(this.dstID, this.srcID, this.seqNumber, MessageType.MESSAGE);
     }
 
-    public int getSrcPort() {
-        return srcPort;
-    }
-
-    public String getDstIP() {
-        return dstIP;
-    }
-
-    public int getDstPort() {
-        return dstPort;
+    public void setClientServer(int srcID, int dstID) {
+        this.srcID = srcID;
+        this.dstID = dstID;
     }
 
     public int getSeqNumber() {
@@ -93,11 +65,6 @@ public class Message implements Serializable {
 
     public MessageType getMessageType() {
         return mt;
-    }
-
-    public void setAddress(InetAddress dstaddress, int dstport) {
-        this.dstIP = dstaddress.getHostName();
-        this.dstPort = dstport;
     }
 
     public long getTimeSent() {

@@ -49,7 +49,7 @@ public class BestEffortBroadcast extends Layer {
                 if(!mToSend.isEmpty()) {
                     Message m = mToSend.pollFirst();
                     for (Host h : hosts) {
-                        m.setClientServer(ip, port, id, h.getIp(), h.getPort(), h.getId());
+                        m.setClientServer(id, h.getId());
                         downLayer.sendFromTop(new Message(m));
                     }
                     deliveredFromBottom(m);

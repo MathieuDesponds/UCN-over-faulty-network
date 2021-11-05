@@ -41,7 +41,7 @@ public class PerfectLink extends Layer{
 
     public PerfectLink(Layer topLayer, String ip, int port, Parser parser) {
         super.setTopLayer(topLayer);
-        super.setDownLayer(new FairLossLink(this, ip, port));
+        super.setDownLayer(new FairLossLink(this, ip, port, parser));
 
         //Set no Window for the moment
         WINDOW = parser.configNbMessage();
@@ -142,8 +142,7 @@ public class PerfectLink extends Layer{
             }
         }
         private void ackMessage(Message m){
-            Message ack = new Message(m.getDstIP(), m.getDstPort(), MY_ID, m.getSrcID(), m.getSrcIP(), m.getSrcPort(),
-                    m.getSeqNumber(), Message.MessageType.ACK, "", m.getTimeSent());
+            Message ack = new Message(MY_ID, m.getSrcID(), m.getSeqNumber(), Message.MessageType.ACK, "", m.getTimeSent());
             mToSend.addLast(ack);
         }
     }

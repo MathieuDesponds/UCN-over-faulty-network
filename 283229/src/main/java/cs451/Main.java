@@ -78,7 +78,7 @@ public class Main {
         List<Message> lm = new ArrayList<Message>();
         int configNbMessage = parser.configNbMessage();
         for(int i = 1; i<=configNbMessage; ++i) {
-            lm.add(new Message(i, Message.MessageType.MESSAGE, "AAAA" + i));
+            lm.add(new Message(i, Message.MessageType.MESSAGE, ""));
         }
         return lm;
     }

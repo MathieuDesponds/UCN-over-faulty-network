@@ -74,10 +74,19 @@ public class Parser {
         return configParser.getNbMessage();
     }
 
+    @Deprecated
     public Host getMe() {
         int myId = myId();
         for(Host h : hosts()){
             if(h.getId()==myId)
+                return h;
+        }
+        return null;
+    }
+
+    public Host getHostWithId(int hostId) {
+        for(Host h : hosts()){
+            if(h.getId()==hostId)
                 return h;
         }
         return null;
