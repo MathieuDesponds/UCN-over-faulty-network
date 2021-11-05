@@ -1,9 +1,9 @@
 package cs451.layers;
 
-import cs451.BroadcastMessage;
+import cs451.Messages.BroadcastMessage;
 import cs451.Host;
-import cs451.Message;
-import cs451.Parser;
+import cs451.Messages.Message;
+import cs451.Parsing.Parser;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -37,13 +37,13 @@ public class BestEffortBroadcast extends Layer {
 
     @Override
     public void deliveredFromBottom(Message m) {
-        System.out.println("receive"+m);
+        //System.out.println("receive"+m);
         topLayer.deliveredFromBottom(new BroadcastMessage(m));
     }
 
     @Override
     public <BroadcastMessage extends Message> void  sendFromTop(BroadcastMessage m) {
-        mToSend.addLast((cs451.BroadcastMessage) m);
+        mToSend.addLast((cs451.Messages.BroadcastMessage) m);
     }
 
     private class BEBSendingThread implements Runnable {
@@ -54,7 +54,7 @@ public class BestEffortBroadcast extends Layer {
                     BroadcastMessage m = mToSend.pollFirst();
                     for (Host h : hosts) {
                         m.setClientServer(id, h.getId());
-                        System.out.println("send"+m);
+                        //System.out.println("send"+m);
                         downLayer.sendFromTop(new Message(m));
                     }
                     if(m.getBroadcasterID() == MY_ID)

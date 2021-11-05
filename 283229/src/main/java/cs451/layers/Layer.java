@@ -1,6 +1,6 @@
 package cs451.layers;
 
-import cs451.Message;
+import cs451.Messages.Message;
 
 public abstract class Layer {
     protected Layer topLayer;

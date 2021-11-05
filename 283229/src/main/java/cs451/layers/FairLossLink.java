@@ -1,8 +1,8 @@
 package cs451.layers;
 
 import cs451.Host;
-import cs451.Message;
-import cs451.Parser;
+import cs451.Messages.Message;
+import cs451.Parsing.Parser;
 
 import java.io.IOException;
 import java.net.*;

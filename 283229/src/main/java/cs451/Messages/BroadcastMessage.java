@@ -1,4 +1,4 @@
-package cs451;
+package cs451.Messages;
 
 import java.util.Objects;
 

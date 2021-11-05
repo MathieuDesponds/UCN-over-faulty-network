@@ -1,10 +1,9 @@
 package cs451.layers;
 
-import cs451.BroadcastMessage;
-import cs451.Message;
-import cs451.Parser;
+import cs451.Messages.BroadcastMessage;
+import cs451.Messages.Message;
+import cs451.Parsing.Parser;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -12,8 +11,7 @@ public class UniformReliableBroadcast extends Layer {
     private final int MY_ID;
     private final int NUMBER_OF_HOSTS;
     private final int MIN_NUMBER_OF_HOSTS_TO_ACK;
-    //ToDo make it concurrent
-    private HashSet<BroadcastMessage> mDelivered;
+    private ConcurrentHashMap<BroadcastMessage,Boolean> mDelivered;
     private ConcurrentHashMap<BroadcastMessage, Integer> mPendingToBeAcked;
 
     Thread URBAck;
@@ -26,7 +24,7 @@ public class UniformReliableBroadcast extends Layer {
         super.setDownLayer(downLayer);
         super.setTopLayer(topLayer);
 
-        mDelivered = new HashSet<>();
+        mDelivered = new ConcurrentHashMap<>();
         mPendingToBeAcked = new ConcurrentHashMap<>();
 
         URBAck = new Thread(new URBDeliveringThread());
@@ -35,14 +33,14 @@ public class UniformReliableBroadcast extends Layer {
     }
 
     @Override
-    public <BroadcastMessage extends Message> void  deliveredFromBottom(BroadcastMessage m) {
-        if(!mDelivered.contains(m)) {
+    public <BM extends Message> void  deliveredFromBottom(BM m) {
+        if(!mDelivered.containsKey(m)) {
             int count = mPendingToBeAcked.getOrDefault(m, 0);
             if(count == 0 && m.getBroadcasterID() != MY_ID) {
                 count++; //We know that already 2 (respectively me and the one that sent it) can deliver
                 downLayer.sendFromTop(m);
             }
-            mPendingToBeAcked.put((cs451.BroadcastMessage) m,count+1);
+            mPendingToBeAcked.put((BroadcastMessage) m,count+1);
         }
     }
 
@@ -53,7 +51,6 @@ public class UniformReliableBroadcast extends Layer {
     }
 
     private class URBDeliveringThread implements Runnable{
-
         @Override
         public void run() {
             while(!closed){
@@ -61,7 +58,7 @@ public class UniformReliableBroadcast extends Layer {
                     if(entry.getValue() >= MIN_NUMBER_OF_HOSTS_TO_ACK){
                         BroadcastMessage bm  = entry.getKey();
                         topLayer.deliveredFromBottom(bm);
-                        mDelivered.add(bm);
+                        mDelivered.put(bm,true);
                         mPendingToBeAcked.remove(bm);
                     }
                 }
