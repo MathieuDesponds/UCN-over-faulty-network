@@ -11,6 +11,9 @@ public class Parser {
     private OutputParser outputParser;
     private ConfigParser configParser;
 
+    public int MY_ID;
+    public int NUMBER_OF_HOSTS;
+
     public Parser(String[] args) {
         this.args = args;
     }
@@ -47,6 +50,9 @@ public class Parser {
         if (!configParser.populate(args[Constants.CONFIG_VALUE])) {
             help();
         }
+
+        MY_ID = myId();
+        NUMBER_OF_HOSTS = hosts().size();
     }
 
     private void help() {
@@ -72,16 +78,6 @@ public class Parser {
 
     public int configNbMessage() {
         return configParser.getNbMessage();
-    }
-
-    @Deprecated
-    public Host getMe() {
-        int myId = myId();
-        for(Host h : hosts()){
-            if(h.getId()==myId)
-                return h;
-        }
-        return null;
     }
 
     public Host getHostWithId(int hostId) {

@@ -16,7 +16,7 @@ public class OutputLayer extends Layer{
     public OutputLayer(Layer topLayer, Parser parser){
         this.path = parser.output();
         output = new ArrayList<>();
-        Layer downLayer = new UniformReliableBroadcast(this, parser);
+        Layer downLayer = new FIFOUniformBroadcast(this, parser);
         super.setDownLayer(downLayer);
         super.setTopLayer(topLayer);
     }
