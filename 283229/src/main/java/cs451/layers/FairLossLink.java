@@ -2,6 +2,7 @@ package cs451.layers;
 
 import cs451.Host;
 import cs451.Messages.Message;
+import cs451.Messages.Packet;
 import cs451.Parsing.Parser;
 
 import java.io.IOException;
@@ -16,7 +17,7 @@ public class FairLossLink extends Layer {
     private Parser parser;
 
     //Threads
-    private ConcurrentLinkedDeque<Message> mToSend;
+    private ConcurrentLinkedDeque<Packet> mToSend;
     Thread flST;
     Thread flRT;
 
@@ -62,8 +63,9 @@ public class FairLossLink extends Layer {
     }
 
     @Override
-    public void sendFromTop(Message m) {
-        mToSend.addLast(m);
+
+    public <PKT extends Message> void sentFromTop(PKT m) {
+        mToSend.addLast((Packet) m);
     }
 
     @Override
@@ -85,9 +87,9 @@ public class FairLossLink extends Layer {
         public void run() {
             while(!closed){
                 if(!mToSend.isEmpty()) {
-                    Message m = mToSend.pollFirst();
+                    Packet m = mToSend.pollFirst();
                     try {
-                        DatagramPacket packet = getPacketFromMessage(m);
+                        DatagramPacket packet = getDatagramPacketFromPacket(m);
                         socket.send(packet);
                         //System.out.println("send "+m);
                     } catch (UnknownHostException | SocketException e) {
@@ -98,7 +100,7 @@ public class FairLossLink extends Layer {
                 }
             }
         }
-        private DatagramPacket getPacketFromMessage(Message m) throws UnknownHostException {
+        private DatagramPacket getDatagramPacketFromPacket(Packet m) throws UnknownHostException {
             byte[] result = m.serializeToBytes();
             Host dst = parser.getHostWithId(m.getDstID());
             DatagramPacket pkt = new DatagramPacket(result, result.length,
@@ -126,7 +128,7 @@ public class FairLossLink extends Layer {
             while(!closed){
                 try {
                     socket.receive(packet);
-                    Message m = Message.deserializeFromBytes(packet.getData());
+                    Packet m = (Packet)(Message.deserializeFromBytes(packet.getData()));
                     //System.out.println("receive "+m);
                     topLayer.deliveredFromBottom(m);
                 } catch (SocketTimeoutException e) {

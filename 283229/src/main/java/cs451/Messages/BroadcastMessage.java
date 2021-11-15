@@ -3,25 +3,25 @@ package cs451.Messages;
 import java.util.Objects;
 
 public class BroadcastMessage extends Message {
-    public BroadcastMessage(int srcID, int dstID, int broadcastId, int seqNumber, MessageType mt, String payload, long timeSent) {
-        super(srcID, dstID,broadcastId, seqNumber, mt, payload, timeSent);
+    private String payload;
+    private int dstId;
+
+    public BroadcastMessage(int broadcastId, int seqNumber, String payload) {
+        super(broadcastId, seqNumber);
+        this.payload = payload;
     }
 
-    public BroadcastMessage(Message m) {
-        super(m.srcID, m.dstID, m.broadcasterID, m.seqNumber, m.mt, m.payload);
+    public BroadcastMessage(int seqNumber, String payload) {
+        super(-1, seqNumber);
+        this.payload = payload;
     }
 
-    public BroadcastMessage(int seqNumber, MessageType mt, String payload) {
-        super(seqNumber, mt, payload);
+    public void setDstId(int dstId) {
+        this.dstId = dstId;
     }
 
-
-    public int getBroadcasterID() {
-        return broadcasterID;
-    }
-
-    public void setBroadcasterID(int broadcasterID) {
-        this.broadcasterID = broadcasterID;
+    public int getDstId() {
+        return dstId;
     }
 
     @Override

@@ -1,6 +1,8 @@
 package cs451.layers;
 
 import cs451.Messages.Message;
+import cs451.Messages.Packet;
+import cs451.Messages.Packet.MessageType;
 import cs451.Parsing.Parser;
 
 import java.util.HashSet;
@@ -19,7 +21,7 @@ public class PerfectLink extends Layer{
     private int [] waitingFor; //for receiver
 
     //Psendo SR
-    private HashSet<Message> mReceived;
+    private HashSet<Packet> mReceived;
 
     //TIMEOUT
     private final double MULTIPLICATE_WHEN_TIMEOUT = 2;
@@ -34,10 +36,10 @@ public class PerfectLink extends Layer{
 
     //Thread
     Thread plRT,plST,plTOT;
-    private ConcurrentLinkedDeque<Message> mToSend;
-    private ConcurrentLinkedDeque<Message> waitingToBeSent;
-    private ConcurrentLinkedDeque<Message> mToDeliver;
-    private ConcurrentHashMap<Message,Boolean> mOnTheRoad;
+    private ConcurrentLinkedDeque<Packet> mToSend;
+    private ConcurrentLinkedDeque<Packet> waitingToBeSent;
+    private ConcurrentLinkedDeque<Packet> mToDeliver;
+    private ConcurrentHashMap<Packet,Boolean> mOnTheRoad;
 
     public PerfectLink(Layer topLayer, String ip, int port, Parser parser) {
         super.setTopLayer(topLayer);
@@ -71,7 +73,7 @@ public class PerfectLink extends Layer{
         plTOT.start();
     }
 
-    private void timeout(Message m) {
+    private void timeout(Packet m) {
         if(System.currentTimeMillis() > nextTimeOut) {
             timeoutInterval = (int) (timeoutInterval * MULTIPLICATE_WHEN_TIMEOUT);
             nextTimeOut = System.currentTimeMillis() + timeoutInterval;
@@ -89,14 +91,14 @@ public class PerfectLink extends Layer{
 
 
     @Override
-    public void deliveredFromBottom(Message m) {
-        mToDeliver.addLast(m);
+    public <PKT extends Message> void deliveredFromBottom(PKT m) {
+        mToDeliver.addLast((Packet) m);
     }
 
     @Override
-    public void sendFromTop(Message m) {
+    public <PKT extends Message> void sentFromTop(PKT m) {
         // vestige of windows  : waitingToBeSent.addLast(m);
-        mToSend.addLast(m);
+        mToSend.addLast((Packet) m);
     }
 
     private class PLSendingThread implements Runnable {
@@ -108,12 +110,12 @@ public class PerfectLink extends Layer{
                     mToSend.addLast(waitingToBeSent.pollFirst());
                 }*/
                 while(!mToSend.isEmpty()){
-                    Message m = mToSend.pollFirst();
-                    if(m.getMessageType() == Message.MessageType.MESSAGE){
-                        m.setTimeSent(System.currentTimeMillis());
-                        mOnTheRoad.put(m,true);
+                    Packet pkt = mToSend.pollFirst();
+                    if(pkt.getMessageType() == MessageType.MESSAGE){
+                        pkt.setTimeSent(System.currentTimeMillis());
+                        mOnTheRoad.put(pkt,true);
                     }
-                    downLayer.sendFromTop(m);
+                    downLayer.sentFromTop(pkt);
                 }
 
             }
@@ -126,23 +128,23 @@ public class PerfectLink extends Layer{
             int i = 0;
             while(!closed){
                 if(!mToDeliver.isEmpty()){
-                    Message m = mToDeliver.pollFirst();
-                    if(m.getMessageType() == Message.MessageType.MESSAGE){
-                        if(!mReceived.contains(m)) {
-                            mReceived.add(m);
-                            topLayer.deliveredFromBottom(m);
+                    Packet pkt = mToDeliver.pollFirst();
+                    if(pkt.getMessageType() == MessageType.MESSAGE){
+                        if(!mReceived.contains(pkt)) {
+                            mReceived.add(pkt);
+                            topLayer.deliveredFromBottom(pkt);
                         }
-                        ackMessage(m);
-                    }else if(m.getMessageType() == Message.MessageType.ACK){
-                        mOnTheRoad.remove(m.getAckedMessageToHash());
+                        ackPacket(pkt);
+                    }else if(pkt.getMessageType() == MessageType.ACK){
+                        mOnTheRoad.remove(pkt.getAckedPacketToHash());
                         mSentInWindow.decrementAndGet();
-                        updateTimeout(m.getTimeSent());
+                        updateTimeout(pkt.getTimeSent());
                     }
                 }
             }
         }
-        private void ackMessage(Message m){
-            mToSend.addLast(m.getAckingMessage());
+        private void ackPacket(Packet m){
+            mToSend.addLast(m.getAckingPacket());
         }
     }
 
@@ -153,8 +155,8 @@ public class PerfectLink extends Layer{
             while(!closed){
                 long time = System.currentTimeMillis();
                 int to = timeoutInterval;
-                Set<Message> s = new HashSet<>(mOnTheRoad.keySet());
-                for(Message m : s){
+                Set<Packet> s = new HashSet<>(mOnTheRoad.keySet());
+                for(Packet m : s){
                     if(time - m.getTimeSent() > to){
                         timeout(m);
                     }

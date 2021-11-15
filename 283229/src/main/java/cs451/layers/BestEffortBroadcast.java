@@ -42,7 +42,7 @@ public class BestEffortBroadcast extends Layer {
     }
 
     @Override
-    public <BroadcastMessage extends Message> void  sendFromTop(BroadcastMessage m) {
+    public <BroadcastMessage extends Message> void  sentFromTop(BroadcastMessage m) {
         mToSend.addLast((cs451.Messages.BroadcastMessage) m);
     }
 
@@ -55,7 +55,7 @@ public class BestEffortBroadcast extends Layer {
                     for (Host h : hosts) {
                         m.setClientServer(id, h.getId());
                         //System.out.println("send"+m);
-                        downLayer.sendFromTop(new Message(m));
+                        downLayer.sentFromTop(new Message(m));
                     }
                     if(m.getBroadcasterID() == MY_ID)
                         deliveredFromBottom(m);

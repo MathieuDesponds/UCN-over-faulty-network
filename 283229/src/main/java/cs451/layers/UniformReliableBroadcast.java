@@ -35,19 +35,20 @@ public class UniformReliableBroadcast extends Layer {
     @Override
     public <BM extends Message> void  deliveredFromBottom(BM m) {
         if(!mDelivered.containsKey(m)) {
+            //We checked how many times we received this BroadcastMessage
             int count = mPendingToBeAcked.getOrDefault(m, 0);
             if(count == 0 && ((BroadcastMessage) m).getBroadcasterID() != MY_ID) {
                 count++; //We know that already 2 (respectively me and the one that sent it) can deliver
-                downLayer.sendFromTop(m);
+                downLayer.sentFromTop(m);
             }
             mPendingToBeAcked.put((BroadcastMessage) m,count+1);
         }
     }
 
     @Override
-    public <BM extends Message> void sendFromTop(BM m) {
+    public <BM extends Message> void sentFromTop(BM m) {
         ((BroadcastMessage) m).setBroadcasterID(MY_ID);
-        downLayer.sendFromTop(m);
+        downLayer.sentFromTop(m);
     }
 
     private class URBDeliveringThread implements Runnable{
