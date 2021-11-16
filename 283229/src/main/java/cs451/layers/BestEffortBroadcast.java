@@ -11,9 +11,6 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 public class BestEffortBroadcast extends Layer {
     private final int MY_ID;
     private List<Host> hosts;
-    private String ip;
-    private int port;
-    private int id;
 
     Thread bebST;
     private ConcurrentLinkedDeque<BroadcastMessage> mToSend;
@@ -21,13 +18,12 @@ public class BestEffortBroadcast extends Layer {
     public BestEffortBroadcast(Layer topLayer, Parser parser){
         MY_ID = parser.myId();
         Host me = parser.getHostWithId(MY_ID);
-        this.ip = me.getIp(); this.port = me.getPort(); this.id = me.getId();
 
         hosts = parser.hosts();
         hosts.remove(me);
 
         setTopLayer(topLayer);
-        setDownLayer(new PerfectLink(this, ip, port, parser));
+        setDownLayer(new MessageGrouper(this, parser));
 
         mToSend = new ConcurrentLinkedDeque<>();
         bebST = new Thread(new BEBSendingThread());
@@ -36,14 +32,14 @@ public class BestEffortBroadcast extends Layer {
     }
 
     @Override
-    public void deliveredFromBottom(Message m) {
+    public <BM extends Message> void deliveredFromBottom(BM m) {
         //System.out.println("receive"+m);
-        topLayer.deliveredFromBottom(new BroadcastMessage(m));
+        topLayer.deliveredFromBottom(m);
     }
 
     @Override
-    public <BroadcastMessage extends Message> void  sentFromTop(BroadcastMessage m) {
-        mToSend.addLast((cs451.Messages.BroadcastMessage) m);
+    public <BM extends Message> void  sentFromTop(BM m) {
+        mToSend.addLast((BroadcastMessage) m);
     }
 
     private class BEBSendingThread implements Runnable {
@@ -51,14 +47,12 @@ public class BestEffortBroadcast extends Layer {
         public void run() {
             while(!closed){
                 if(!mToSend.isEmpty()) {
-                    BroadcastMessage m = mToSend.pollFirst();
+                    BroadcastMessage bm = mToSend.pollFirst();
                     for (Host h : hosts) {
-                        m.setClientServer(id, h.getId());
-                        //System.out.println("send"+m);
-                        downLayer.sentFromTop(new Message(m));
+                        downLayer.sentFromTop(new BroadcastMessage(bm,h.getId()));
                     }
-                    if(m.getBroadcasterID() == MY_ID)
-                        deliveredFromBottom(m);
+                    if(bm.getBroadcasterID() == MY_ID)
+                        deliveredFromBottom(bm);
                 }
             }
         }

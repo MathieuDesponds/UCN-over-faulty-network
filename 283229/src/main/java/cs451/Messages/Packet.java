@@ -4,12 +4,13 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class Packet extends Message {
+
     public enum MessageType {MESSAGE, ACK};
     private MessageType mt;
     private long timeSent;
     private int srcID;
     private int dstID;
-    private ConcurrentLinkedDeque<BroadcastMessage> packets;
+    private ConcurrentLinkedDeque<BroadcastMessage> brcMessages;
 
     protected Packet(int broadcasterID, int seqNumber, int srcID, int dstID, MessageType mt, long timeSent) {
         super(broadcasterID, seqNumber);
@@ -17,7 +18,10 @@ public class Packet extends Message {
         this.dstID = dstID;
         this.mt = mt;
         this.timeSent = timeSent;
-        packets = new ConcurrentLinkedDeque<>();
+        brcMessages = new ConcurrentLinkedDeque<>();
+    }
+    public Packet(int broadcasterID, int srcID, int dstID, MessageType mt) {
+        this(broadcasterID, -1, srcID,dstID,mt,-1);
     }
 
     public void setClientServer(int srcID, int dstID) {
@@ -39,6 +43,10 @@ public class Packet extends Message {
         return dstID;
     }
 
+    public ConcurrentLinkedDeque<BroadcastMessage> getBrcMessages() {
+        return brcMessages;
+    }
+
     public MessageType getMessageType() {
         return mt;
     }
@@ -49,6 +57,14 @@ public class Packet extends Message {
 
     public long getTimeSent() {
         return timeSent;
+    }
+
+    public int getSize() {
+        return brcMessages.size();
+    }
+
+    public void addBM(BroadcastMessage bm){
+        brcMessages.addLast(bm);
     }
 
     @Override

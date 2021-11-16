@@ -16,12 +16,21 @@ public class BroadcastMessage extends Message {
         this.payload = payload;
     }
 
-    public void setDstId(int dstId) {
+    public BroadcastMessage(BroadcastMessage bm, int dstId) {
+        super(bm.getBroadcasterID(), bm.getSeqNumber());
         this.dstId = dstId;
+    }
+
+    public String getPayload() {
+        return payload;
     }
 
     public int getDstId() {
         return dstId;
+    }
+
+    public void setDstId(int dstId) {
+        this.dstId = dstId;
     }
 
     @Override

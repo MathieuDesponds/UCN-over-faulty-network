@@ -41,9 +41,9 @@ public class PerfectLink extends Layer{
     private ConcurrentLinkedDeque<Packet> mToDeliver;
     private ConcurrentHashMap<Packet,Boolean> mOnTheRoad;
 
-    public PerfectLink(Layer topLayer, String ip, int port, Parser parser) {
+    public PerfectLink(Layer topLayer,  Parser parser) {
         super.setTopLayer(topLayer);
-        super.setDownLayer(new FairLossLink(this, ip, port, parser));
+        super.setDownLayer(new FairLossLink(this, parser));
 
         //Set no Window for the moment
         WINDOW = parser.configNbMessage();

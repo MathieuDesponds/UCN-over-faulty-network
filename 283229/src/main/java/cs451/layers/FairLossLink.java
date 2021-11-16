@@ -21,14 +21,15 @@ public class FairLossLink extends Layer {
     Thread flST;
     Thread flRT;
 
-    public FairLossLink(Layer topLayer, String ip, int port, Parser parser){
+    public FairLossLink(Layer topLayer,  Parser parser){
         //Layers
         super.setTopLayer(topLayer);
         super.setDownLayer(null);
 
         //Socket stuff
-        this.ip = ip;
-        this.port = port;
+        Host me = parser.getME();
+        this.ip = me.getIp();
+        this.port = me.getPort();
         this.parser = parser;
         try {
             InetAddress inetAddress = InetAddress.getByName(ip);
