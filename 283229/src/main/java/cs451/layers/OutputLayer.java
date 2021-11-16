@@ -37,6 +37,7 @@ public class OutputLayer extends Layer{
         }
         if(output.size() == numberOfTotalMessage){
             finishedTime = System.currentTimeMillis();
+            System.out.println("Time is "+(finishedTime- startTime));
         }
     }
 
