@@ -12,7 +12,9 @@ public class Packet extends Message {
     private int dstID;
     private ConcurrentLinkedDeque<BroadcastMessage> brcMessages;
 
-    protected Packet( int seqNumber, int srcID, int dstID, MessageType mt, long timeSent) {
+    private transient long timeCreated;
+
+    protected Packet( int seqNumber, int srcID, int dstID, MessageType mt, long timeSent, long timeCreated) {
         super(seqNumber);
         this.srcID = srcID;
         this.dstID = dstID;
@@ -20,27 +22,23 @@ public class Packet extends Message {
         this.timeSent = timeSent;
         brcMessages = new ConcurrentLinkedDeque<>();
     }
-    public Packet(int srcID, int dstID, MessageType mt) {
-        this( nextSeqNumber++, srcID,dstID,mt,-1);
+    public Packet(int srcID, int dstID, MessageType mt, long timeCreated) {
+        this( nextSeqNumber++, srcID,dstID,mt,-1, timeCreated);
     }
 
-    public void setClientServer(int srcID, int dstID) {
-        this.srcID = srcID;
-        this.dstID = dstID;
-    }
     public Packet getAckedPacketToHash() {
-        return new Packet(this.seqNumber, this.dstID, this.srcID, MessageType.MESSAGE,-1);
+        return new Packet(this.seqNumber, this.dstID, this.srcID, MessageType.MESSAGE,-1,-1);
     }
     public Packet getAckingPacket() {
-        return new Packet(this.seqNumber, this.dstID, this.srcID, MessageType.ACK, this.timeSent);
-    }
-
-    public int getSrcID() {
-        return srcID;
+        return new Packet(this.seqNumber, this.dstID, this.srcID, MessageType.ACK, this.timeSent,-1);
     }
 
     public int getDstID() {
         return dstID;
+    }
+
+    public long getTimeCreated() {
+        return timeCreated;
     }
 
     public ConcurrentLinkedDeque<BroadcastMessage> getBrcMessages() {

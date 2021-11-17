@@ -83,7 +83,7 @@ public class FairLossLink extends Layer {
                     try {
                         DatagramPacket packet = getDatagramPacketFromPacket(m);
                         socket.send(packet);
-                        System.out.println("send "+m);
+                        //System.out.println("send "+m);
                     } catch (UnknownHostException | SocketException e) {
                         e.printStackTrace();
                     } catch (IOException e) {
@@ -94,6 +94,7 @@ public class FairLossLink extends Layer {
         }
         private DatagramPacket getDatagramPacketFromPacket(Packet m) throws UnknownHostException {
             byte[] result = m.serializeToBytes();
+            //System.out.println("message size "+result.length);
             Host dst = parser.getHostWithId(m.getDstID());
             DatagramPacket pkt = new DatagramPacket(result, result.length,
                     InetAddress.getByName(dst.getIp()), dst.getPort());
@@ -121,7 +122,7 @@ public class FairLossLink extends Layer {
                 try {
                     socket.receive(packet);
                     Packet m = (Packet)(Message.deserializeFromBytes(packet.getData()));
-                    System.out.println("receive "+m);
+                    //System.out.println("receive "+m);
                     topLayer.deliveredFromBottom(m);
                 } catch (SocketTimeoutException e) {
                     e.printStackTrace();

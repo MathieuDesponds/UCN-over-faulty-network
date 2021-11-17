@@ -97,7 +97,6 @@ public class PerfectLink extends Layer{
 
     @Override
     public <PKT extends Message> void sentFromTop(PKT m) {
-        // vestige of windows  : waitingToBeSent.addLast(m);
         mToSend.addLast((Packet) m);
     }
 
