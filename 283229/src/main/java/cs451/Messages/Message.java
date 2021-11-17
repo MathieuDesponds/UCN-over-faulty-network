@@ -3,11 +3,9 @@ package cs451.Messages;
 import java.io.*;
 
 public abstract class Message implements Serializable {
-    protected int broadcasterID;
     protected int seqNumber;
 
-    protected Message(int broadcasterID, int seqNumber){
-        this.broadcasterID = broadcasterID;
+    protected Message(int seqNumber){
         this.seqNumber = seqNumber;
     }
 
@@ -43,12 +41,8 @@ public abstract class Message implements Serializable {
         return seqNumber;
     }
 
-    public int getBroadcasterID() {
-        return broadcasterID;
-    }
-
-    public void setBroadcasterID(int broadcasterID) {
-        this.broadcasterID = broadcasterID;
+    public void setSeqNumber(int seqNumber) {
+        this.seqNumber = seqNumber;
     }
 
     public byte[] serializeToBytes(){

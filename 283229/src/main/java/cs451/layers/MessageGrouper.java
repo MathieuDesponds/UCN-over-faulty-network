@@ -18,16 +18,18 @@ public class MessageGrouper extends Layer {
         setTopLayer(topLayer);
         setDownLayer(new PerfectLink(this, parser));
 
-        Host me = parser.getME();
         this.MY_ID = parser.myId();
 
         pktByDst = new ArrayList<>();
-        for(Host h :parser.hosts()){
+        for(int i = 0; i < parser.NUMBER_OF_HOSTS+1; i++)
+            pktByDst.add(null);
+        //Init the buffer to the other hosts
+        for(Host h :parser.hosts())
             initPkt(h.getId());
-        }
+
     }
 
-        @Override
+    @Override
     public <PKT extends Message> void deliveredFromBottom(PKT m) {
         Packet pkt = (Packet) m;
         for(BroadcastMessage bm : pkt.getBrcMessages()){
@@ -37,15 +39,16 @@ public class MessageGrouper extends Layer {
 
     @Override
     public <BM extends Message> void sentFromTop(BM m) {
-        Packet pkt = pktByDst.get(m.getBroadcasterID());
-        pkt.addBM((BroadcastMessage)m);
+        BroadcastMessage bm = (BroadcastMessage) m;
+        Packet pkt = pktByDst.get(bm.getDstId());
+        pkt.addBM(bm);
         if(pkt.getSize() == MAX_M_BY_PKT){
             downLayer.sentFromTop(pkt);
-            initPkt(m.getBroadcasterID());
+            initPkt(pkt.getDstID());
         }
     }
 
     private void initPkt(int index){
-        pktByDst.add(index,new Packet(MY_ID, MY_ID, index, Packet.MessageType.MESSAGE));
+        pktByDst.set(index,new Packet(MY_ID, index, Packet.MessageType.MESSAGE));
     }
 }

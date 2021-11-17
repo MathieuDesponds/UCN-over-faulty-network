@@ -49,10 +49,11 @@ public class BestEffortBroadcast extends Layer {
                 if(!mToSend.isEmpty()) {
                     BroadcastMessage bm = mToSend.pollFirst();
                     for (Host h : hosts) {
+                        //System.out.println("send "+ new BroadcastMessage(bm,h.getId()));
                         downLayer.sentFromTop(new BroadcastMessage(bm,h.getId()));
                     }
                     if(bm.getBroadcasterID() == MY_ID)
-                        deliveredFromBottom(bm);
+                        topLayer.deliveredFromBottom(bm);
                 }
             }
         }

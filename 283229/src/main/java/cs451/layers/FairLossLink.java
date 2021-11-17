@@ -10,7 +10,7 @@ import java.net.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class FairLossLink extends Layer {
-    private final int MAX_SIZE_PACKET = 400; // it is between 217 and and 1 more for the sequence number with 1 more digit
+    private final int MAX_SIZE_PACKET = 40960; // it is between 217 and and 1 more for the sequence number with 1 more digit
     private DatagramSocket socket;
     private String ip;
     private int port;
@@ -36,7 +36,7 @@ public class FairLossLink extends Layer {
             socket = new DatagramSocket(port, inetAddress);
         }
         catch (UnknownHostException | SocketException e){
-            System.err.println(e.getStackTrace());
+            e.printStackTrace();
         }
 
         //Threads
@@ -47,15 +47,6 @@ public class FairLossLink extends Layer {
         flRT.setDaemon(true); flST.setDaemon(true);
         flST.start();
         flRT.start();
-    }
-
-
-    public void setTimeOut(int timeoutInterval) {
-        try {
-            socket.setSoTimeout(timeoutInterval);
-        } catch (SocketException e) {
-
-        }
     }
 
     @Override
@@ -92,9 +83,9 @@ public class FairLossLink extends Layer {
                     try {
                         DatagramPacket packet = getDatagramPacketFromPacket(m);
                         socket.send(packet);
-                        //System.out.println("send "+m);
+                        System.out.println("send "+m);
                     } catch (UnknownHostException | SocketException e) {
-                        //e.printStackTrace();
+                        e.printStackTrace();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -130,7 +121,7 @@ public class FairLossLink extends Layer {
                 try {
                     socket.receive(packet);
                     Packet m = (Packet)(Message.deserializeFromBytes(packet.getData()));
-                    //System.out.println("receive "+m);
+                    System.out.println("receive "+m);
                     topLayer.deliveredFromBottom(m);
                 } catch (SocketTimeoutException e) {
                     e.printStackTrace();

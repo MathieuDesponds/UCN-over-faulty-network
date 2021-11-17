@@ -4,7 +4,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class Packet extends Message {
-
+    private static int nextSeqNumber = 1;
     public enum MessageType {MESSAGE, ACK};
     private MessageType mt;
     private long timeSent;
@@ -12,16 +12,16 @@ public class Packet extends Message {
     private int dstID;
     private ConcurrentLinkedDeque<BroadcastMessage> brcMessages;
 
-    protected Packet(int broadcasterID, int seqNumber, int srcID, int dstID, MessageType mt, long timeSent) {
-        super(broadcasterID, seqNumber);
+    protected Packet( int seqNumber, int srcID, int dstID, MessageType mt, long timeSent) {
+        super(seqNumber);
         this.srcID = srcID;
         this.dstID = dstID;
         this.mt = mt;
         this.timeSent = timeSent;
         brcMessages = new ConcurrentLinkedDeque<>();
     }
-    public Packet(int broadcasterID, int srcID, int dstID, MessageType mt) {
-        this(broadcasterID, -1, srcID,dstID,mt,-1);
+    public Packet(int srcID, int dstID, MessageType mt) {
+        this( nextSeqNumber++, srcID,dstID,mt,-1);
     }
 
     public void setClientServer(int srcID, int dstID) {
@@ -29,10 +29,10 @@ public class Packet extends Message {
         this.dstID = dstID;
     }
     public Packet getAckedPacketToHash() {
-        return new Packet(this.broadcasterID, this.seqNumber, this.dstID, this.srcID, MessageType.MESSAGE,-1);
+        return new Packet(this.seqNumber, this.dstID, this.srcID, MessageType.MESSAGE,-1);
     }
     public Packet getAckingPacket() {
-        return new Packet(this.broadcasterID, this.seqNumber, this.dstID, this.srcID, MessageType.ACK, this.timeSent);
+        return new Packet(this.seqNumber, this.dstID, this.srcID, MessageType.ACK, this.timeSent);
     }
 
     public int getSrcID() {
@@ -74,14 +74,13 @@ public class Packet extends Message {
         Packet packet = (Packet) o;
         return srcID == packet.srcID &&
                 dstID == packet.dstID &&
-                broadcasterID == packet.broadcasterID &&
                 seqNumber == packet.seqNumber &&
                 mt == packet.mt;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(srcID, dstID, broadcasterID, seqNumber, mt);
+        return Objects.hash(srcID, dstID, seqNumber, mt);
     }
 
     @Override
@@ -89,9 +88,9 @@ public class Packet extends Message {
         return "Message{" +
                 "srcID=" + srcID +
                 ", dstID=" + dstID +
-                ", brdID=" + broadcasterID +
                 ", seqNumber=" + seqNumber +
                 ", mt=" + mt +
+                ", size =" + getSize() +
                 '}';
     }
 }
