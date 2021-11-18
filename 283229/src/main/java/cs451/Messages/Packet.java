@@ -4,7 +4,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class Packet extends Message {
-    private static int nextSeqNumber = 1;
+    private transient static int nextSeqNumber = 1;
     public enum MessageType {MESSAGE, ACK};
     private MessageType mt;
     private long timeSent;
