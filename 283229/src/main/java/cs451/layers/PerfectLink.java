@@ -8,16 +8,9 @@ import cs451.Parsing.Parser;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class PerfectLink extends Layer{
-    private final int MY_ID;
-    //Go-Back-N
-    private final int WINDOW;
     private final int NUMBER_OF_HOSTS;
-    private int base = 1; //Seq number of the base --> seq n is at list(n-1)
-    private AtomicInteger mSentInWindow;
     private int [] waitingFor; //for receiver
 
     //Psendo SR
@@ -28,48 +21,34 @@ public class PerfectLink extends Layer{
     private long nextTimeOut = 0;
     private int estimatedRTT = 500;
     private int deviationRTT = 125;
-    private int estimatedTimeout = 1000;
     private int timeoutInterval = 1000;
     private final double alpha = 0.25; //Recommended 0.125
     private final double beta = 0.25;
-    //private ConcurrentLinkedDeque<Long> timeouts;
 
     //Thread
-    Thread plRT,plST,plTOT;
-    private ConcurrentLinkedDeque<Packet> mToSend;
-    private ConcurrentLinkedDeque<Packet> waitingToBeSent;
-    private ConcurrentLinkedDeque<Packet> mToDeliver;
+    Thread plTOT;
+    //private ConcurrentLinkedDeque<Packet> mToSend;
+    //private ConcurrentLinkedDeque<Packet> mToDeliver;
     private ConcurrentHashMap<Packet,Boolean> mOnTheRoad;
 
     public PerfectLink(Layer topLayer,  Parser parser) {
         super.setTopLayer(topLayer);
         super.setDownLayer(new FairLossLink(this, parser));
 
-        //Set no Window for the moment
-        WINDOW = parser.configNbMessage();
 
         mReceived = new HashSet<>();
 
-        this.MY_ID = parser.myId();
         this.NUMBER_OF_HOSTS = parser.hosts().size();
         waitingFor = new int[NUMBER_OF_HOSTS + 1];
         for (int i = 0; i < waitingFor.length; i++)
             waitingFor[i] = 1;
 
-        waitingToBeSent = new ConcurrentLinkedDeque<>();
-        mToSend = new ConcurrentLinkedDeque<>();
+        //mToSend = new ConcurrentLinkedDeque<>();
         mOnTheRoad = new ConcurrentHashMap<>();
-        mToDeliver = new ConcurrentLinkedDeque<>();
+        //mToDeliver = new ConcurrentLinkedDeque<>();
 
-        mSentInWindow = new AtomicInteger(0);
-        plRT = new Thread(new PLReceivingThread());
-        plST = new Thread(new PLSendingThread());
         plTOT = new Thread(new PLTimeoutThread());
-        plRT.setDaemon(true);
-        plST.setDaemon(true);
         plTOT.setDaemon(true);
-        plST.start();
-        plRT.start();
         plTOT.start();
     }
 
@@ -79,7 +58,8 @@ public class PerfectLink extends Layer{
             nextTimeOut = System.currentTimeMillis() + timeoutInterval;
         }
         mOnTheRoad.remove(m);
-        mToSend.addLast(m);
+        //mToSend.addLast(m);
+        sendToBottom(m);
     }
 
     private void updateTimeout(Long timeSent) {
@@ -92,59 +72,34 @@ public class PerfectLink extends Layer{
 
     @Override
     public <PKT extends Message> void deliveredFromBottom(PKT m) {
-        mToDeliver.addLast((Packet) m);
+        //mToDeliver.addLast((Packet) m);
+        Packet pkt = (Packet) m;
+        if(pkt.getMessageType() == MessageType.MESSAGE){
+            if(!mReceived.contains(pkt)) {
+                mReceived.add(pkt);
+                topLayer.deliveredFromBottom(pkt);
+            }
+            ackPacket(pkt);
+        }else if(pkt.getMessageType() == MessageType.ACK){
+            mOnTheRoad.remove(pkt.getAckedPacketToHash());
+            updateTimeout(pkt.getTimeSent());
+        }
+    }
+    private void ackPacket(Packet m){
+        sendToBottom(m.getAckingPacket());
     }
 
     @Override
     public <PKT extends Message> void sentFromTop(PKT m) {
-        mToSend.addLast((Packet) m);
+        sendToBottom((Packet) m);
     }
 
-    private class PLSendingThread implements Runnable {
-        @Override
-        public void run() {
-            while(!closed){
-                /* Vestige of windowing
-                while(!waitingToBeSent.isEmpty()){
-                    mToSend.addLast(waitingToBeSent.pollFirst());
-                }*/
-                while(!mToSend.isEmpty()){
-                    Packet pkt = mToSend.pollFirst();
-                    if(pkt.getMessageType() == MessageType.MESSAGE){
-                        pkt.setTimeSent(System.currentTimeMillis());
-                        mOnTheRoad.put(pkt,true);
-                    }
-                    downLayer.sentFromTop(pkt);
-                }
-
-            }
+    private void sendToBottom(Packet pkt){
+        if(pkt.getMessageType() == MessageType.MESSAGE){
+            pkt.setTimeSent(System.currentTimeMillis());
+            mOnTheRoad.put(pkt,true);
         }
-    }
-
-    private class PLReceivingThread implements Runnable {
-        @Override
-        public void run() {
-            int i = 0;
-            while(!closed){
-                if(!mToDeliver.isEmpty()){
-                    Packet pkt = mToDeliver.pollFirst();
-                    if(pkt.getMessageType() == MessageType.MESSAGE){
-                        if(!mReceived.contains(pkt)) {
-                            mReceived.add(pkt);
-                            topLayer.deliveredFromBottom(pkt);
-                        }
-                        ackPacket(pkt);
-                    }else if(pkt.getMessageType() == MessageType.ACK){
-                        mOnTheRoad.remove(pkt.getAckedPacketToHash());
-                        mSentInWindow.decrementAndGet();
-                        updateTimeout(pkt.getTimeSent());
-                    }
-                }
-            }
-        }
-        private void ackPacket(Packet m){
-            mToSend.addLast(m.getAckingPacket());
-        }
+        downLayer.sentFromTop(pkt);
     }
 
     private class PLTimeoutThread implements Runnable{

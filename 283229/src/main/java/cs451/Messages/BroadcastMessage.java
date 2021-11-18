@@ -5,7 +5,7 @@ import java.util.Objects;
 public class BroadcastMessage extends Message {
     private int broadcasterID;
     private String payload;
-    private int dstId;
+    private transient int dstId;
 
     public BroadcastMessage(int seqNumber, String payload) {
         super(seqNumber);
