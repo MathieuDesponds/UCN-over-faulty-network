@@ -3,18 +3,33 @@ package cs451.Messages;
 import java.util.Objects;
 
 public class BroadcastMessage extends Message {
-    public BroadcastMessage(int srcID, int dstID, int broadcastId, int seqNumber, MessageType mt, String payload, long timeSent) {
-        super(srcID, dstID,broadcastId, seqNumber, mt, payload, timeSent);
+    private int broadcasterID;
+    private String payload;
+    private int dstId;
+
+    public BroadcastMessage(int seqNumber, String payload) {
+        super(seqNumber);
+        this.broadcasterID = -1;
+        this.payload = payload;
     }
 
-    public BroadcastMessage(Message m) {
-        super(m.srcID, m.dstID, m.broadcasterID, m.seqNumber, m.mt, m.payload);
+    public BroadcastMessage(BroadcastMessage bm, int dstId) {
+        super(bm.getSeqNumber());
+        this.broadcasterID = bm.getBroadcasterID();
+        this.dstId = dstId;
     }
 
-    public BroadcastMessage(int seqNumber, MessageType mt, String payload) {
-        super(seqNumber, mt, payload);
+    public String getPayload() {
+        return payload;
     }
 
+    public int getDstId() {
+        return dstId;
+    }
+
+    public void setDstId(int dstId) {
+        this.dstId = dstId;
+    }
 
     public int getBroadcasterID() {
         return broadcasterID;
@@ -23,6 +38,7 @@ public class BroadcastMessage extends Message {
     public void setBroadcasterID(int broadcasterID) {
         this.broadcasterID = broadcasterID;
     }
+
 
     @Override
     public int hashCode() {
@@ -36,5 +52,13 @@ public class BroadcastMessage extends Message {
         BroadcastMessage message = (BroadcastMessage) o;
         return broadcasterID == message.broadcasterID &&
                 seqNumber == message.seqNumber;
+    }
+
+    @Override
+    public String toString() {
+        return "BM {" +
+                "brdID=" + broadcasterID +
+                ", seqNumber=" + seqNumber +
+                '}';
     }
 }

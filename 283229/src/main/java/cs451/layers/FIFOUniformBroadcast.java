@@ -47,8 +47,8 @@ public class FIFOUniformBroadcast extends Layer {
     }
 
     @Override
-    public <BroadcastMessage extends Message> void sendFromTop(BroadcastMessage m) {
-        downLayer.sendFromTop(m);
+    public <BroadcastMessage extends Message> void sentFromTop(BroadcastMessage m) {
+        downLayer.sentFromTop(m);
     }
 
     private class FIFOUBDeliveringThread implements Runnable {

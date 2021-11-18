@@ -42,9 +42,9 @@ public class OutputLayer extends Layer{
     }
 
     @Override
-    public <BroadcastMessage extends Message> void  sendFromTop(BroadcastMessage m) {
+    public <BM extends Message> void  sentFromTop(BM m) {
         if(!closed) {
-            downLayer.sendFromTop(m);
+            downLayer.sentFromTop(m);
             output.add("b " + m.getSeqNumber());
         }
         if(startTime==0)

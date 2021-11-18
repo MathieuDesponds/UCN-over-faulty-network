@@ -14,6 +14,8 @@ public class Parser {
     private OutputParser outputParser;
     private ConfigParser configParser;
 
+    public Host ME;
+
     public int MY_ID;
     public int NUMBER_OF_HOSTS;
 
@@ -56,6 +58,7 @@ public class Parser {
 
         MY_ID = myId();
         NUMBER_OF_HOSTS = hosts().size();
+        ME = getHostWithId(myId());
     }
 
     private void help() {
@@ -89,5 +92,9 @@ public class Parser {
                 return h;
         }
         return null;
+    }
+
+    public Host getME() {
+        return ME;
     }
 }

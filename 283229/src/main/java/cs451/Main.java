@@ -1,7 +1,6 @@
 package cs451;
 
 import cs451.Messages.BroadcastMessage;
-import cs451.Messages.Message;
 import cs451.Parsing.Parser;
 import cs451.layers.Layer;
 import cs451.layers.OutputLayer;
@@ -81,7 +80,7 @@ public class Main {
         List<BroadcastMessage> lm = new ArrayList<BroadcastMessage>();
         int configNbMessage = parser.configNbMessage();
         for(int i = 1; i<=configNbMessage; ++i) {
-            lm.add(new BroadcastMessage(i, Message.MessageType.MESSAGE, ""));
+            lm.add(new BroadcastMessage(i,""));
         }
         return lm;
     }
@@ -93,6 +92,6 @@ public class Main {
 
     private static void send(List<BroadcastMessage> lm) {
         for(BroadcastMessage m :lm)
-            layer.sendFromTop(m);
+            layer.sentFromTop(m);
     }
 }

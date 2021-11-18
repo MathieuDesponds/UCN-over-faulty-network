@@ -2,6 +2,7 @@ package cs451.layers;
 
 import cs451.Host;
 import cs451.Messages.Message;
+import cs451.Messages.Packet;
 import cs451.Parsing.Parser;
 
 import java.io.IOException;
@@ -9,32 +10,33 @@ import java.net.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class FairLossLink extends Layer {
-    private final int MAX_SIZE_PACKET = 400; // it is between 217 and and 1 more for the sequence number with 1 more digit
+    private final int MAX_SIZE_PACKET = 40960; // it is between 217 and and 1 more for the sequence number with 1 more digit
     private DatagramSocket socket;
     private String ip;
     private int port;
     private Parser parser;
 
     //Threads
-    private ConcurrentLinkedDeque<Message> mToSend;
+    private ConcurrentLinkedDeque<Packet> mToSend;
     Thread flST;
     Thread flRT;
 
-    public FairLossLink(Layer topLayer, String ip, int port, Parser parser){
+    public FairLossLink(Layer topLayer,  Parser parser){
         //Layers
         super.setTopLayer(topLayer);
         super.setDownLayer(null);
 
         //Socket stuff
-        this.ip = ip;
-        this.port = port;
+        Host me = parser.getME();
+        this.ip = me.getIp();
+        this.port = me.getPort();
         this.parser = parser;
         try {
             InetAddress inetAddress = InetAddress.getByName(ip);
             socket = new DatagramSocket(port, inetAddress);
         }
         catch (UnknownHostException | SocketException e){
-            System.err.println(e.getStackTrace());
+            e.printStackTrace();
         }
 
         //Threads
@@ -47,23 +49,15 @@ public class FairLossLink extends Layer {
         flRT.start();
     }
 
-
-    public void setTimeOut(int timeoutInterval) {
-        try {
-            socket.setSoTimeout(timeoutInterval);
-        } catch (SocketException e) {
-
-        }
-    }
-
     @Override
     public void deliveredFromBottom(Message m) {
         System.err.print("Should not be called because it it the layer furthest down");
     }
 
     @Override
-    public void sendFromTop(Message m) {
-        mToSend.addLast(m);
+
+    public <PKT extends Message> void sentFromTop(PKT m) {
+        mToSend.addLast((Packet) m);
     }
 
     @Override
@@ -85,21 +79,22 @@ public class FairLossLink extends Layer {
         public void run() {
             while(!closed){
                 if(!mToSend.isEmpty()) {
-                    Message m = mToSend.pollFirst();
+                    Packet m = mToSend.pollFirst();
                     try {
-                        DatagramPacket packet = getPacketFromMessage(m);
+                        DatagramPacket packet = getDatagramPacketFromPacket(m);
                         socket.send(packet);
                         //System.out.println("send "+m);
                     } catch (UnknownHostException | SocketException e) {
-                        //e.printStackTrace();
+                        e.printStackTrace();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
             }
         }
-        private DatagramPacket getPacketFromMessage(Message m) throws UnknownHostException {
+        private DatagramPacket getDatagramPacketFromPacket(Packet m) throws UnknownHostException {
             byte[] result = m.serializeToBytes();
+            //System.out.println("message size "+result.length);
             Host dst = parser.getHostWithId(m.getDstID());
             DatagramPacket pkt = new DatagramPacket(result, result.length,
                     InetAddress.getByName(dst.getIp()), dst.getPort());
@@ -126,7 +121,7 @@ public class FairLossLink extends Layer {
             while(!closed){
                 try {
                     socket.receive(packet);
-                    Message m = Message.deserializeFromBytes(packet.getData());
+                    Packet m = (Packet)(Message.deserializeFromBytes(packet.getData()));
                     //System.out.println("receive "+m);
                     topLayer.deliveredFromBottom(m);
                 } catch (SocketTimeoutException e) {
