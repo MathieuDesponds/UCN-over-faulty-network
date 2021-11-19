@@ -1,10 +1,15 @@
 package cs451.Messages;
 
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class Packet extends Message {
     private static int nextSeqNumber = 1;
+
+
     public enum MessageType {MESSAGE, ACK};
     private MessageType mt;
     private long timeSent;
@@ -94,4 +99,31 @@ public class Packet extends Message {
                 ", size =" + getSize() +
                 '}';
     }
+
+
+    public byte[] serializeToBytes() {
+        //byte[] bytes = ByteBuffer.allocate(12).putInt(seqNumber).putInt(broadcasterID).putInt(payload.length()).array();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        outputStream.write(seqNumber);
+        outputStream.write(srcID);
+        outputStream.write(dstID);
+        //outputStream.writeBytes(timeSent);
+        outputStream.write(getSize());
+        for(BroadcastMessage bm : brcMessages){
+            outputStream.writeBytes(bm.serializeToBytes());
+        }
+        return outputStream.toByteArray( );
+    }
+
+    public static Packet deserializeFromBytes(byte[] data) {
+        int seqNumber = fromByteArray(data,0);
+        int srcID = fromByteArray(data, 4);
+        int dstID = fromByteArray(data, 8);
+
+        int size = fromByteArray(data, 12+8);
+
+        String payload = new String(Arrays.copyOfRange(data,8, data.length), StandardCharsets.UTF_8);;
+        return new Packet(seqNumber, srcID,dstID, MessageType.MESSAGE, -1,-1);
+    }
+
 }
