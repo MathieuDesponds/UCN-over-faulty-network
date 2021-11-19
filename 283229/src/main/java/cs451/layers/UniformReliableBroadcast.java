@@ -41,7 +41,7 @@ public class UniformReliableBroadcast extends Layer {
                 mDelivered.put(bm,true);
                 mPendingToBeAcked.remove(bm);
             }else {
-                mPendingToBeAcked.put((BroadcastMessage) m, count + 1);
+                mPendingToBeAcked.put(bm, count + 1);
             }
         }
     }

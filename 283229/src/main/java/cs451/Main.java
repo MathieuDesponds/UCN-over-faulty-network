@@ -40,7 +40,8 @@ public class Main {
         long pid = ProcessHandle.current().pid();
         System.out.println("My PID: " + pid + "\n");
         System.out.println("From a new terminal type `kill -SIGINT " + pid + "` or `kill -SIGTERM " + pid + "` to stop processing packets\n");
-
+        //System.out.println((new BroadcastMessage(1,"").serializeToBytes().length)); //159
+        //System.out.println((new Message(1).serializeToBytes().length)); 59
         System.out.println("My ID: " + parser.myId() + "\n");
         System.out.println("List of resolved hosts is:");
         System.out.println("==========================");
