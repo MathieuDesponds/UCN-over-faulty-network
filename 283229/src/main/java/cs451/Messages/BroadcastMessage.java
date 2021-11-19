@@ -75,6 +75,4 @@ public class BroadcastMessage extends Message {
         String payload = new String(Arrays.copyOfRange(data,startPoint+ 8, startPoint+data.length), StandardCharsets.UTF_8);
         return new BroadcastMessage(seqNumber, broadcasterID, payload);
     }
-
-
 }

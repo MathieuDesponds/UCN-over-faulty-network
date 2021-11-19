@@ -1,6 +1,6 @@
 package cs451.Messages;
 
-import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Objects;
@@ -91,28 +91,28 @@ public class Packet extends Message {
 
     @Override
     public String toString() {
-        return "Message{" +
+        String s = "Packet {" +
                 "srcID=" + srcID +
                 ", dstID=" + dstID +
                 ", seqNumber=" + seqNumber +
                 ", mt=" + mt +
                 ", size =" + getSize() +
-                '}';
+                "} \n";
+        for(BroadcastMessage bm : brcMessages)
+            s+= bm.toString()+"\n";
+        return s;
     }
 
 
     public byte[] serializeToBytes() {
-        //byte[] bytes = ByteBuffer.allocate(12).putInt(seqNumber).putInt(broadcasterID).putInt(payload.length()).array();
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        outputStream.write(seqNumber);
-        outputStream.write(srcID);
-        outputStream.write(dstID);
-        //outputStream.writeBytes(timeSent);
-        outputStream.write(getSize());
+        int totalsize = 28 + 8* brcMessages.size();//28+8*brc.length
+        ByteBuffer bb = ByteBuffer.allocate(totalsize).putInt(seqNumber).putInt(srcID).putInt(dstID).putInt(mt.ordinal())
+                .putLong(timeSent).putInt(getSize());
         for(BroadcastMessage bm : brcMessages){
-            outputStream.writeBytes(bm.serializeToBytes());
+            bb.put(bm.serializeToBytes());
         }
-        return outputStream.toByteArray( );
+        System.out.println(bb.array().length);
+        return bb.array();
     }
 
     public static Packet deserializeFromBytes(byte[] data) {
