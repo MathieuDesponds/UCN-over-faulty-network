@@ -4,7 +4,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class Packet extends Message {
-    private transient static int nextSeqNumber = 1;
+    private static int nextSeqNumber = 1;
     public enum MessageType {MESSAGE, ACK};
     private MessageType mt;
     private long timeSent;
@@ -20,7 +20,10 @@ public class Packet extends Message {
         this.dstID = dstID;
         this.mt = mt;
         this.timeSent = timeSent;
-        brcMessages = new ConcurrentLinkedDeque<>();
+        if(mt == MessageType.MESSAGE)
+            brcMessages = new ConcurrentLinkedDeque<>();
+        else
+            brcMessages = null;
     }
     public Packet(int srcID, int dstID, MessageType mt, long timeCreated) {
         this( nextSeqNumber++, srcID,dstID,mt,-1, timeCreated);
