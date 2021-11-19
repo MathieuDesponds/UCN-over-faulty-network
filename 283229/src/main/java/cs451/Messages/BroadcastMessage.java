@@ -70,8 +70,8 @@ public class BroadcastMessage extends Message {
     }
 
     public static BroadcastMessage deserializeFromBytes(byte[] data, int startPoint) {
-        int seqNumber = fromByteArray(data,startPoint);
-        int broadcasterID = fromByteArray(data, startPoint+4);
+        int seqNumber = intFromByteArray(data,startPoint);
+        int broadcasterID = intFromByteArray(data, startPoint+4);
         String payload = new String(Arrays.copyOfRange(data,startPoint+ 8, startPoint+data.length), StandardCharsets.UTF_8);
         return new BroadcastMessage(seqNumber, broadcasterID, payload);
     }

@@ -1,8 +1,6 @@
 package cs451.Messages;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
@@ -97,6 +95,7 @@ public class Packet extends Message {
                 ", seqNumber=" + seqNumber +
                 ", mt=" + mt +
                 ", size =" + getSize() +
+                ", ts =" + timeSent +
                 "} \n";
         for(BroadcastMessage bm : brcMessages)
             s+= bm.toString()+"\n";
@@ -105,8 +104,8 @@ public class Packet extends Message {
 
 
     public byte[] serializeToBytes() {
-        int totalsize = 28 + 8* brcMessages.size();//28+8*brc.length
-        ByteBuffer bb = ByteBuffer.allocate(totalsize).putInt(seqNumber).putInt(srcID).putInt(dstID).putInt(mt.ordinal())
+        int totalsize = 25 + 8* brcMessages.size();//28+8*brc.length
+        ByteBuffer bb = ByteBuffer.allocate(totalsize).putInt(seqNumber).putInt(srcID).putInt(dstID).put((byte)mt.ordinal())
                 .putLong(timeSent).putInt(getSize());
         for(BroadcastMessage bm : brcMessages){
             bb.put(bm.serializeToBytes());
@@ -116,14 +115,18 @@ public class Packet extends Message {
     }
 
     public static Packet deserializeFromBytes(byte[] data) {
-        int seqNumber = fromByteArray(data,0);
-        int srcID = fromByteArray(data, 4);
-        int dstID = fromByteArray(data, 8);
+        int seqNumber = intFromByteArray(data,0);
+        int srcID = intFromByteArray(data, 4);
+        int dstID = intFromByteArray(data, 8);
+        MessageType mt = data[12]==0?MessageType.MESSAGE:MessageType.ACK;
+        long timeSent = longFromByteArray(data, 13);
+        int size = intFromByteArray(data, 21);
+        Packet pkt =  new Packet(seqNumber, srcID,dstID, MessageType.MESSAGE, timeSent,-1);
 
-        int size = fromByteArray(data, 12+8);
-
-        String payload = new String(Arrays.copyOfRange(data,8, data.length), StandardCharsets.UTF_8);;
-        return new Packet(seqNumber, srcID,dstID, MessageType.MESSAGE, -1,-1);
+        for (int i = 0; i<size; i++){
+            pkt.addBM(BroadcastMessage.deserializeFromBytes(data, 25+8*i));
+        }
+        return pkt;
     }
 
 }
