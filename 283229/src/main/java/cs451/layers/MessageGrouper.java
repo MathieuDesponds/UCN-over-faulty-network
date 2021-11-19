@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class MessageGrouper extends Layer {
     private int MY_ID;
-    private final int MAX_M_BY_PKT = 100;
+    private final int MAX_M_BY_PKT = 2000;
     private final int NAGLE_TIMEOUT = 200; //ms
     List<Packet> pktByDst;
     ConcurrentLinkedDeque<BroadcastMessage> mToSend;
