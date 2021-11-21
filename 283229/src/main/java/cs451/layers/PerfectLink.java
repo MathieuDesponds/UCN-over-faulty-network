@@ -27,8 +27,6 @@ public class PerfectLink extends Layer{
 
     //Thread
     Thread plTOT;
-    //private ConcurrentLinkedDeque<Packet> mToSend;
-    //private ConcurrentLinkedDeque<Packet> mToDeliver;
     private ConcurrentHashMap<Packet,Boolean> mOnTheRoad;
 
     public PerfectLink(Layer topLayer,  Parser parser) {
@@ -43,9 +41,7 @@ public class PerfectLink extends Layer{
         for (int i = 0; i < waitingFor.length; i++)
             waitingFor[i] = 1;
 
-        //mToSend = new ConcurrentLinkedDeque<>();
         mOnTheRoad = new ConcurrentHashMap<>();
-        //mToDeliver = new ConcurrentLinkedDeque<>();
 
         plTOT = new Thread(new PLTimeoutThread());
         plTOT.setDaemon(true);
@@ -58,7 +54,6 @@ public class PerfectLink extends Layer{
             nextTimeOut = System.currentTimeMillis() + timeoutInterval;
         }
         mOnTheRoad.remove(m);
-        //mToSend.addLast(m);
         sendToBottom(m);
     }
 
@@ -72,7 +67,6 @@ public class PerfectLink extends Layer{
 
     @Override
     public <PKT extends Message> void deliveredFromBottom(PKT m) {
-        //mToDeliver.addLast((Packet) m);
         Packet pkt = (Packet) m;
         if(pkt.getMessageType() == MessageType.MESSAGE){
             if(!mReceived.contains(pkt)) {
@@ -106,13 +100,18 @@ public class PerfectLink extends Layer{
 
         @Override
         public void run() {
+            long lastCheck = 0;
+            long timeBetweenCheck = 20;
             while(!closed){
                 long time = System.currentTimeMillis();
-                int to = timeoutInterval;
-                Set<Packet> s = new HashSet<>(mOnTheRoad.keySet());
-                for(Packet m : s){
-                    if(time - m.getTimeSent() > to){
-                        timeout(m);
+                if(time-lastCheck > timeBetweenCheck) {
+                    lastCheck = time;
+                    int to = timeoutInterval;
+                    Set<Packet> s = new HashSet<>(mOnTheRoad.keySet());
+                    for (Packet m : s) {
+                        if (time - m.getTimeSent() > to) {
+                            timeout(m);
+                        }
                     }
                 }
             }

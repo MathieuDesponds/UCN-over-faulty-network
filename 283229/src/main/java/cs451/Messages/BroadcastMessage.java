@@ -19,16 +19,8 @@ public class BroadcastMessage extends Message {
         this.dstId = dstId;
     }
 
-    public String getPayload() {
-        return payload;
-    }
-
     public int getDstId() {
         return dstId;
-    }
-
-    public void setDstId(int dstId) {
-        this.dstId = dstId;
     }
 
     public int getBroadcasterID() {
