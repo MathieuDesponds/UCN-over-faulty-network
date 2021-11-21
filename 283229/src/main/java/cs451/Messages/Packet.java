@@ -23,10 +23,7 @@ public class Packet extends Message {
         this.dstID = dstID;
         this.mt = mt;
         this.timeSent = timeSent;
-        if(mt == MessageType.MESSAGE)
-            brcMessages = new ConcurrentLinkedDeque<>();
-        else
-            brcMessages = null;
+        brcMessages = new ConcurrentLinkedDeque<>();
     }
     public Packet(int srcID, int dstID, MessageType mt, long timeCreated) {
         this( nextSeqNumber++, srcID,dstID,mt,-1, timeCreated);
@@ -110,7 +107,6 @@ public class Packet extends Message {
         for(BroadcastMessage bm : brcMessages){
             bb.put(bm.serializeToBytes());
         }
-        System.out.println(bb.array().length);
         return bb.array();
     }
 
@@ -121,7 +117,7 @@ public class Packet extends Message {
         MessageType mt = data[12]==0?MessageType.MESSAGE:MessageType.ACK;
         long timeSent = longFromByteArray(data, 13);
         int size = intFromByteArray(data, 21);
-        Packet pkt =  new Packet(seqNumber, srcID,dstID, MessageType.MESSAGE, timeSent,-1);
+        Packet pkt =  new Packet(seqNumber, srcID,dstID, mt, timeSent,-1);
 
         for (int i = 0; i<size; i++){
             pkt.addBM(BroadcastMessage.deserializeFromBytes(data, 25+8*i));

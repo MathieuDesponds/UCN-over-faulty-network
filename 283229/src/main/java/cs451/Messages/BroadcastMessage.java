@@ -1,8 +1,6 @@
 package cs451.Messages;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Objects;
 
 public class BroadcastMessage extends Message {
@@ -22,8 +20,7 @@ public class BroadcastMessage extends Message {
     }
 
     public BroadcastMessage(BroadcastMessage bm, int dstId) {
-        super(bm.getSeqNumber());
-        this.broadcasterID = bm.getBroadcasterID();
+        this(bm.getSeqNumber(), bm.getBroadcasterID(),"");
         this.dstId = dstId;
     }
 
@@ -72,7 +69,7 @@ public class BroadcastMessage extends Message {
     public static BroadcastMessage deserializeFromBytes(byte[] data, int startPoint) {
         int seqNumber = intFromByteArray(data,startPoint);
         int broadcasterID = intFromByteArray(data, startPoint+4);
-        String payload = new String(Arrays.copyOfRange(data,startPoint+ 8, startPoint+data.length), StandardCharsets.UTF_8);
+        String payload = ""; //new String(Arrays.copyOfRange(data,startPoint+ 8, startPoint+data.length), StandardCharsets.UTF_8);
         return new BroadcastMessage(seqNumber, broadcasterID, payload);
     }
 }

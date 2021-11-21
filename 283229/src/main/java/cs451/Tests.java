@@ -17,6 +17,8 @@ public class Tests {
         p.addBM(bm1); p.addBM(bm2);
 
         byte[] pb = p.serializeToBytes();
+        System.out.println((byte)1);
+        System.out.println(Packet.MessageType.ACK.ordinal()+" "+Packet.MessageType.MESSAGE.ordinal());
 
         System.out.println(Packet.deserializeFromBytes(pb));
     }
