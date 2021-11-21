@@ -10,7 +10,7 @@ import java.net.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class FairLossLink extends Layer {
-    private final int MAX_SIZE_PACKET = 40960; // it is between 217 and and 1 more for the sequence number with 1 more digit
+    private final int MAX_SIZE_PACKET = 64500 ;
     private DatagramSocket socket;
     private String ip;
     private int port;
@@ -94,7 +94,7 @@ public class FairLossLink extends Layer {
         }
         private DatagramPacket getDatagramPacketFromPacket(Packet m) throws UnknownHostException {
             byte[] result = m.serializeToBytes();
-            System.out.println("message size "+result.length+ " ");
+            System.out.println(result.length+" "+m.getSize());
             Host dst = parser.getHostWithId(m.getDstID());
             DatagramPacket pkt = new DatagramPacket(result, result.length,
                     InetAddress.getByName(dst.getIp()), dst.getPort());
@@ -121,7 +121,7 @@ public class FairLossLink extends Layer {
             while(!closed){
                 try {
                     socket.receive(packet);
-                    Packet m = (Packet)(Message.deserializeFromBytes(packet.getData()));
+                    Packet m = (Packet)(Packet.deserializeFromBytes(packet.getData()));
                     topLayer.deliveredFromBottom(m);
                 } catch (SocketTimeoutException e) {
                     e.printStackTrace();

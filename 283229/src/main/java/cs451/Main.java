@@ -12,6 +12,7 @@ public class Main {
     private static Parser parser;
     private static Layer layer;
 
+
     private static void handleSignal() {
         //immediately stop network packet processing
         System.out.println("Immediately stopping network packet processing.");

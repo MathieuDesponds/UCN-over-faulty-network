@@ -1,10 +1,13 @@
 package cs451.Messages;
 
+import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class Packet extends Message {
     private static int nextSeqNumber = 1;
+
+
     public enum MessageType {MESSAGE, ACK};
     private MessageType mt;
     private long timeSent;
@@ -20,10 +23,7 @@ public class Packet extends Message {
         this.dstID = dstID;
         this.mt = mt;
         this.timeSent = timeSent;
-        if(mt == MessageType.MESSAGE)
-            brcMessages = new ConcurrentLinkedDeque<>();
-        else
-            brcMessages = null;
+        brcMessages = new ConcurrentLinkedDeque<>();
     }
     public Packet(int srcID, int dstID, MessageType mt, long timeCreated) {
         this( nextSeqNumber++, srcID,dstID,mt,-1, timeCreated);
@@ -86,12 +86,43 @@ public class Packet extends Message {
 
     @Override
     public String toString() {
-        return "Message{" +
+        String s = "Packet {" +
                 "srcID=" + srcID +
                 ", dstID=" + dstID +
                 ", seqNumber=" + seqNumber +
                 ", mt=" + mt +
                 ", size =" + getSize() +
-                '}';
+                ", ts =" + timeSent +
+                "} \n";
+        for(BroadcastMessage bm : brcMessages)
+            s+= bm.toString()+"\n";
+        return s;
     }
+
+
+    public byte[] serializeToBytes() {
+        int totalsize = 25 + 8* brcMessages.size();//28+8*brc.length
+        ByteBuffer bb = ByteBuffer.allocate(totalsize).putInt(seqNumber).putInt(srcID).putInt(dstID).put((byte)mt.ordinal())
+                .putLong(timeSent).putInt(getSize());
+        for(BroadcastMessage bm : brcMessages){
+            bb.put(bm.serializeToBytes());
+        }
+        return bb.array();
+    }
+
+    public static Packet deserializeFromBytes(byte[] data) {
+        int seqNumber = intFromByteArray(data,0);
+        int srcID = intFromByteArray(data, 4);
+        int dstID = intFromByteArray(data, 8);
+        MessageType mt = data[12]==0?MessageType.MESSAGE:MessageType.ACK;
+        long timeSent = longFromByteArray(data, 13);
+        int size = intFromByteArray(data, 21);
+        Packet pkt =  new Packet(seqNumber, srcID,dstID, mt, timeSent,-1);
+
+        for (int i = 0; i<size; i++){
+            pkt.addBM(BroadcastMessage.deserializeFromBytes(data, 25+8*i));
+        }
+        return pkt;
+    }
+
 }
