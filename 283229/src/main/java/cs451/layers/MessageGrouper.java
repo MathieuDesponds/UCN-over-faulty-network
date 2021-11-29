@@ -20,8 +20,6 @@ public class MessageGrouper extends Layer {
     Thread batchT;
 
     public MessageGrouper(Layer topLayer, Parser parser) {
-        setTopLayer(topLayer);
-        setDownLayer(new PerfectLink(this, parser));
 
         this.MY_ID = parser.myId();
 
@@ -34,6 +32,8 @@ public class MessageGrouper extends Layer {
             initPkt(h.getId());
         batchT = new Thread(new BatchingThread());
         batchT.setDaemon(true); batchT.start();
+        setTopLayer(topLayer);
+        setDownLayer(new PerfectLink(this, parser));
     }
 
     @Override

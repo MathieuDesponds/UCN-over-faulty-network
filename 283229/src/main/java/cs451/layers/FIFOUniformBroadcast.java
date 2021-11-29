@@ -16,9 +16,6 @@ public class FIFOUniformBroadcast extends Layer {
     Thread fifoDT;
 
     public FIFOUniformBroadcast(Layer topLayer, Parser parser){
-        Layer downLayer = new UniformReliableBroadcast(this, parser);
-        super.setDownLayer(downLayer);
-        super.setTopLayer(topLayer);
 
         waitingFor = new int [parser.NUMBER_OF_HOSTS+1];
         for(int i = 0 ; i < waitingFor.length; i++){
@@ -39,6 +36,10 @@ public class FIFOUniformBroadcast extends Layer {
         fifoDT = new Thread(new FIFOUBDeliveringThread());
         fifoDT.setDaemon(true);
         fifoDT.start();
+
+        Layer downLayer = new UniformReliableBroadcast(this, parser);
+        super.setDownLayer(downLayer);
+        super.setTopLayer(topLayer);
 
     }
     @Override

@@ -18,12 +18,12 @@ public class UniformReliableBroadcast extends Layer {
         MY_ID = parser.myId();
         NUMBER_OF_HOSTS = parser.hosts().size();
         MIN_NUMBER_OF_HOSTS_TO_ACK = NUMBER_OF_HOSTS /2 +1;
-        Layer downLayer = new BestEffortBroadcast(this, parser);
-        super.setDownLayer(downLayer);
-        super.setTopLayer(topLayer);
 
         mDelivered = new ConcurrentHashMap<>();
         mPendingToBeAcked = new ConcurrentHashMap<>();
+        Layer downLayer = new BestEffortBroadcast(this, parser);
+        super.setDownLayer(downLayer);
+        super.setTopLayer(topLayer);
     }
 
     @Override

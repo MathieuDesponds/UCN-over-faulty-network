@@ -30,10 +30,6 @@ public class PerfectLink extends Layer{
     private ConcurrentHashMap<Packet,Boolean> mOnTheRoad;
 
     public PerfectLink(Layer topLayer,  Parser parser) {
-        super.setTopLayer(topLayer);
-        super.setDownLayer(new FairLossLink(this, parser));
-
-
         mReceived = new HashSet<>();
 
         this.NUMBER_OF_HOSTS = parser.hosts().size();
@@ -46,6 +42,8 @@ public class PerfectLink extends Layer{
         plTOT = new Thread(new PLTimeoutThread());
         plTOT.setDaemon(true);
         plTOT.start();
+        super.setTopLayer(topLayer);
+        super.setDownLayer(new FairLossLink(this, parser));
     }
 
     private void timeout(Packet m) {
