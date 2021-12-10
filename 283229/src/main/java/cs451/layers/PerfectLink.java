@@ -18,11 +18,16 @@ public class PerfectLink extends Layer{
 
     //TIMEOUT
     private final double MULTIPLICATE_WHEN_TIMEOUT = 2;
-    private long nextTimeOut = 0;
-    private int estimatedRTT = 500;
-    private int deviationRTT = 125;
-    private int timeoutInterval = 1000;
-    private final double alpha = 0.25; //Recommended 0.125
+
+    private final int ESTIMATED_RTT_0 = 500;
+    private final int DEVIATION_RTT_0 = 125;
+    private final int TIMEOUT_INTERVAL_0 = 1000;
+    private final int NEXT_TIMEOUT_0 = 0;
+    private long [] nextTimeOut;
+    private int [] estimatedRTT;
+    private int [] deviationRTT;
+    private int [] timeoutInterval;
+    private final double alpha = 0.125; //Recommended 0.125
     private final double beta = 0.25;
 
     //Thread
@@ -34,8 +39,17 @@ public class PerfectLink extends Layer{
 
         this.NUMBER_OF_HOSTS = parser.hosts().size();
         waitingFor = new int[NUMBER_OF_HOSTS + 1];
-        for (int i = 0; i < waitingFor.length; i++)
+        estimatedRTT = new int[NUMBER_OF_HOSTS + 1];
+        deviationRTT = new int[NUMBER_OF_HOSTS + 1];
+        timeoutInterval = new int[NUMBER_OF_HOSTS + 1];
+        nextTimeOut = new long[NUMBER_OF_HOSTS + 1];
+        for (int i = 0; i < waitingFor.length; i++) {
             waitingFor[i] = 1;
+            estimatedRTT[i] = ESTIMATED_RTT_0;
+            deviationRTT[i] = DEVIATION_RTT_0;
+            timeoutInterval[i] = TIMEOUT_INTERVAL_0;
+            nextTimeOut[i] = NEXT_TIMEOUT_0;
+        }
 
         mOnTheRoad = new ConcurrentHashMap<>();
 
@@ -47,19 +61,20 @@ public class PerfectLink extends Layer{
     }
 
     private void timeout(Packet m) {
-        if(System.currentTimeMillis() > nextTimeOut) {
-            timeoutInterval = (int) (timeoutInterval * MULTIPLICATE_WHEN_TIMEOUT);
-            nextTimeOut = System.currentTimeMillis() + timeoutInterval;
+        int dstID = m.getDstID();
+        if(System.currentTimeMillis() > nextTimeOut[dstID]) {
+            timeoutInterval[dstID] = (int) (timeoutInterval[dstID] * MULTIPLICATE_WHEN_TIMEOUT);
+            nextTimeOut[dstID] = System.currentTimeMillis() + timeoutInterval[dstID];
         }
         mOnTheRoad.remove(m);
         sendToBottom(m);
     }
 
-    private void updateTimeout(Long timeSent) {
+    private void updateTimeout(Long timeSent, int dstID) {
         long sampleRtt = System.currentTimeMillis()-timeSent;
-        estimatedRTT = (int) ((1-alpha) * estimatedRTT + alpha * sampleRtt);
-        deviationRTT = (int) ((1-beta) * deviationRTT + beta * Math.abs(sampleRtt-estimatedRTT));
-        timeoutInterval = estimatedRTT + 2*deviationRTT;
+        estimatedRTT[dstID] = (int) ((1-alpha) * estimatedRTT[dstID]  + alpha * sampleRtt);
+        deviationRTT[dstID]  = (int) ((1-beta) * deviationRTT[dstID]  + beta * Math.abs(sampleRtt-estimatedRTT[dstID] ));
+        timeoutInterval[dstID]  = estimatedRTT[dstID]  + 2*deviationRTT[dstID] ;
     }
 
 
@@ -74,7 +89,7 @@ public class PerfectLink extends Layer{
             ackPacket(pkt);
         }else if(pkt.getMessageType() == MessageType.ACK){
             mOnTheRoad.remove(pkt.getAckedPacketToHash());
-            updateTimeout(pkt.getTimeSent());
+            updateTimeout(pkt.getTimeSent(), pkt.getSrcID());
         }
     }
     private void ackPacket(Packet m){
@@ -104,10 +119,9 @@ public class PerfectLink extends Layer{
                 long time = System.currentTimeMillis();
                 if(time-lastCheck > timeBetweenCheck) {
                     lastCheck = time;
-                    int to = timeoutInterval;
-                    Set<Packet> s = new HashSet<>(mOnTheRoad.keySet());
+                    Set<Packet> s = new HashSet<Packet>(mOnTheRoad.keySet());
                     for (Packet m : s) {
-                        if (time - m.getTimeSent() > to) {
+                        if (time - m.getTimeSent() > timeoutInterval[m.getDstID()]) {
                             timeout(m);
                         }
                     }
