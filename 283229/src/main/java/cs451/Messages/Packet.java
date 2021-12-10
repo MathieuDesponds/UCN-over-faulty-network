@@ -40,6 +40,10 @@ public class Packet extends Message {
         return dstID;
     }
 
+    public int getSrcID() {
+        return srcID;
+    }
+
     public long getTimeCreated() {
         return timeCreated;
     }
