@@ -1,5 +1,6 @@
 package cs451.Messages;
 
+import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
@@ -65,7 +66,7 @@ public class Packet extends Message {
     }
 
     public int getSize() {
-        return brcMessages.size();
+        return mt == MessageType.MESSAGE? brcMessages.size(): 0;
     }
 
     public void addBM(BroadcastMessage bm){
@@ -97,5 +98,35 @@ public class Packet extends Message {
                 ", mt=" + mt +
                 ", size =" + getSize() +
                 '}';
+    }
+    public byte[] serializeToBytes() {
+        int totalSize;
+        if(mt == MessageType.ACK) {
+            totalSize = 13;
+            return ByteBuffer.allocate(totalSize).putInt(seqNumber).putInt(srcID).putInt(dstID).put((byte)mt.ordinal()).array();
+        }else {
+            totalSize = 17 + 8 * brcMessages.size();//28+8*brc.length
+            ByteBuffer bb = ByteBuffer.allocate(totalSize).putInt(seqNumber).putInt(srcID).putInt(dstID).put((byte) mt.ordinal())
+                    .putInt(getSize());
+            for (BroadcastMessage bm : brcMessages) {
+                bb.put(bm.serializeToBytes());
+            }
+            return bb.array();
+        }
+    }
+
+    public static Packet deserializeFromBytes(byte[] data) {
+        int seqNumber = intFromByteArray(data,0);
+        int srcID = intFromByteArray(data, 4);
+        int dstID = intFromByteArray(data, 8);
+        MessageType mt = data[12]==0?MessageType.MESSAGE:MessageType.ACK;
+        Packet pkt =  new Packet(seqNumber, srcID,dstID, mt, -1,-1);
+        if(mt == MessageType.MESSAGE) {
+            int size = intFromByteArray(data, 13);
+            for (int i = 0; i < size; i++) {
+                pkt.addBM(BroadcastMessage.deserializeFromBytes(data, 17 + 8 * i));
+            }
+        }
+        return pkt;
     }
 }

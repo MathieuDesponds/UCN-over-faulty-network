@@ -121,7 +121,7 @@ public class FairLossLink extends Layer {
             while(!closed){
                 try {
                     socket.receive(packet);
-                    Packet m = (Packet)(Message.deserializeFromBytes(packet.getData()));
+                    Packet m = Packet.deserializeFromBytes(packet.getData());
                     topLayer.deliveredFromBottom(m);
                 } catch (SocketTimeoutException e) {
                     e.printStackTrace();
