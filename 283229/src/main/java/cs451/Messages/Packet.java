@@ -7,7 +7,7 @@ public class Packet extends Message {
     private static int nextSeqNumber = 1;
     public enum MessageType {MESSAGE, ACK};
     private MessageType mt;
-    private long timeSent;
+    private transient long timeSent;
     private int srcID;
     private int dstID;
     private ConcurrentLinkedDeque<BroadcastMessage> brcMessages;

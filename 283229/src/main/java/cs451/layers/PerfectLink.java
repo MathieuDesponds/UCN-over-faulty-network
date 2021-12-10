@@ -6,7 +6,7 @@ import cs451.Messages.Packet.MessageType;
 import cs451.Parsing.Parser;
 
 import java.util.HashSet;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PerfectLink extends Layer{
@@ -32,7 +32,7 @@ public class PerfectLink extends Layer{
 
     //Thread
     Thread plTOT;
-    private ConcurrentHashMap<Packet,Boolean> mOnTheRoad;
+    private ConcurrentHashMap<Packet,Long> mOnTheRoad;
 
     public PerfectLink(Layer topLayer,  Parser parser) {
         mReceived = new HashSet<>();
@@ -88,8 +88,13 @@ public class PerfectLink extends Layer{
             }
             ackPacket(pkt);
         }else if(pkt.getMessageType() == MessageType.ACK){
-            mOnTheRoad.remove(pkt.getAckedPacketToHash());
-            updateTimeout(pkt.getTimeSent(), pkt.getSrcID());
+            Packet p = pkt.getAckedPacketToHash();
+            if(!mOnTheRoad.containsKey(p)){
+                System.err.println(p); //should never happen
+                updateTimeout(mOnTheRoad.get(p), pkt.getSrcID());
+                mOnTheRoad.remove(p);
+            }
+
         }
     }
     private void ackPacket(Packet m){
@@ -104,7 +109,7 @@ public class PerfectLink extends Layer{
     private void sendToBottom(Packet pkt){
         if(pkt.getMessageType() == MessageType.MESSAGE){
             pkt.setTimeSent(System.currentTimeMillis());
-            mOnTheRoad.put(pkt,true);
+            mOnTheRoad.put(pkt,pkt.getTimeSent());
         }
         downLayer.sentFromTop(pkt);
     }
@@ -119,10 +124,11 @@ public class PerfectLink extends Layer{
                 long time = System.currentTimeMillis();
                 if(time-lastCheck > timeBetweenCheck) {
                     lastCheck = time;
-                    Set<Packet> s = new HashSet<Packet>(mOnTheRoad.keySet());
-                    for (Packet m : s) {
-                        if (time - m.getTimeSent() > timeoutInterval[m.getDstID()]) {
-                            timeout(m);
+                    Packet p;
+                    for(Map.Entry<Packet,Long> entry : mOnTheRoad.entrySet()){
+                        p = entry.getKey();
+                        if (time - entry.getValue() > timeoutInterval[p.getDstID()]) {
+                            timeout(p);
                         }
                     }
                 }
