@@ -100,7 +100,7 @@ public class Packet extends Message {
                 '}';
     }
     public byte[] serializeToBytes() {
-        int totalSize, gt1, gt2;
+        int totalSize, gt1;
         gt1 = getSize();
         if(mt == MessageType.ACK) {
             totalSize = 13;
