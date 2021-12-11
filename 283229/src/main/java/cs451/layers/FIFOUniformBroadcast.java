@@ -69,7 +69,7 @@ public class FIFOUniformBroadcast extends Layer {
                             waitingFor[bid] ++;
                         }
                     }else{
-                        pending.get(m.getBroadcasterID()).add(m);
+                        pending.get(bid).add(m);
                     }
                 }
             }

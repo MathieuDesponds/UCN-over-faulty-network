@@ -60,14 +60,15 @@ public class MessageGrouper extends Layer {
         private final long TIME_BETWEEN_CHECK = 20;
         @Override
         public void run() {
+            lastCheck = System.currentTimeMillis();
             while(true){
                 while(!mToSend.isEmpty()){
                     BroadcastMessage bm = mToSend.pollFirst();
                     Packet pkt = pktByDst.get(bm.getDstId());
                     pkt.addBM(bm);
                     if(pkt.getSize() == MAX_M_BY_PKT){
-                        downLayer.sentFromTop(pkt);
                         initPkt(pkt.getDstID());
+                        downLayer.sentFromTop(pkt);
                     }
                 }
                 long currentTime = System.currentTimeMillis();
