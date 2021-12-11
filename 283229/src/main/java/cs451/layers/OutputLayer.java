@@ -6,11 +6,12 @@ import cs451.Parsing.Parser;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class OutputLayer extends Layer{
-    private ArrayList<String> output;
+    private List<String> output;
     private ConcurrentLinkedDeque<String> sToWrite;
     private StringBuilder sb;
     private String path;
@@ -21,7 +22,7 @@ public class OutputLayer extends Layer{
 
     public OutputLayer(Layer topLayer, Parser parser){
         this.path = parser.output();
-        output = new ArrayList<>();
+        output = new LinkedList<>();
         sToWrite = new ConcurrentLinkedDeque<>();
         Layer downLayer = new FIFOUniformBroadcast(this, parser);
         super.setDownLayer(downLayer);
@@ -54,11 +55,10 @@ public class OutputLayer extends Layer{
     }
 
     public void write(){
+        String s = sb.toString();
         try {
             FileWriter writer = new FileWriter(path);
-            for(String s : output){
-                writer.write(s+"\n");
-            }
+            writer.write(s);
             writer.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -71,7 +71,7 @@ public class OutputLayer extends Layer{
             sb = new StringBuilder();
             while(!closed){
                 while(!sToWrite.isEmpty()){
-                    output.add(sToWrite.pollFirst());
+                    sb.append(sToWrite.pollFirst()+"\n");
                 }
             }
         }
