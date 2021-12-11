@@ -30,8 +30,6 @@ public class PerfectLink extends Layer{
     private final double alpha = 0.125; //Recommended 0.125
     private final double beta = 0.25;
 
-    //Thread
-    Thread plTOT;
     private ConcurrentHashMap<Packet,Long> mOnTheRoad;
 
     public PerfectLink(Layer topLayer,  Parser parser) {
@@ -52,10 +50,7 @@ public class PerfectLink extends Layer{
         }
 
         mOnTheRoad = new ConcurrentHashMap<>();
-        System.out.println(NUMBER_OF_HOSTS);
-        plTOT = new Thread(new PLTimeoutThread());
-        plTOT.setDaemon(true);
-        plTOT.start();
+        addThread(new Thread(new PLTimeoutThread()));
         super.setTopLayer(topLayer);
         super.setDownLayer(new FairLossLink(this, parser));
     }

@@ -6,31 +6,20 @@ import cs451.Parsing.Parser;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class OutputLayer extends Layer{
-    private List<String> output;
     private ConcurrentLinkedDeque<String> sToWrite;
     private StringBuilder sb;
     private String path;
-    private boolean closed = false;
-
-
-    Thread OLT;
 
     public OutputLayer(Layer topLayer, Parser parser){
         this.path = parser.output();
-        output = new LinkedList<>();
         sToWrite = new ConcurrentLinkedDeque<>();
         Layer downLayer = new FIFOUniformBroadcast(this, parser);
         super.setDownLayer(downLayer);
         super.setTopLayer(topLayer);
-
-        OLT = new Thread(new OLStringBuilderThread());
-        OLT.setDaemon(true);
-        OLT.start();
+        addThread(new Thread(new OLStringBuilderThread()));
     }
 
     @Override
@@ -46,12 +35,6 @@ public class OutputLayer extends Layer{
             downLayer.sentFromTop(m);
             sToWrite.addLast("b " + m.getSeqNumber());
         }
-    }
-
-    @Override
-    public void close() {
-        super.close();
-        write();
     }
 
     public void write(){

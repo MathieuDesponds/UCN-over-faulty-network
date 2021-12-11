@@ -2,10 +2,14 @@ package cs451.layers;
 
 import cs451.Messages.Message;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public abstract class Layer {
     protected Layer topLayer;
     protected Layer downLayer;
     protected boolean closed = false;
+    protected List<Thread> myThreads = new ArrayList<>();
 
     protected void setDownLayer(Layer downLayer) {
         this.downLayer = downLayer;
@@ -26,8 +30,15 @@ public abstract class Layer {
      */
     public abstract  <T extends Message> void sentFromTop(T m);
 
-    public void close(){
+    public void addThread(Thread t){
+        t.setDaemon(true); t.start();
+        myThreads.add(t);
+    }
+    public final void close(){
         closed = true;
-        downLayer.close();
+        for(Thread t : myThreads)
+            t.interrupt();
+        if(downLayer != null)
+            downLayer.close();
     }
 }

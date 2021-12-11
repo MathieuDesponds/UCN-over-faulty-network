@@ -18,8 +18,6 @@ public class FairLossLink extends Layer {
 
     //Threads
     private ConcurrentLinkedDeque<Packet> mToSend;
-    Thread flST;
-    Thread flRT;
 
     public FairLossLink(Layer topLayer,  Parser parser){
         //Layers
@@ -42,11 +40,8 @@ public class FairLossLink extends Layer {
         //Threads
         mToSend = new ConcurrentLinkedDeque<>();
 
-        flST = new Thread(new FLSendingThread());
-        flRT = new Thread(new FLReceivingThread());
-        flRT.setDaemon(true); flST.setDaemon(true);
-        flST.start();
-        flRT.start();
+        addThread(new Thread(new FLSendingThread()));
+        addThread(new Thread(new FLReceivingThread()));
     }
 
     @Override
@@ -58,14 +53,6 @@ public class FairLossLink extends Layer {
 
     public <PKT extends Message> void sentFromTop(PKT m) {
         mToSend.addLast((Packet) m);
-    }
-
-    @Override
-    public void close() {
-        closed = true;
-        flRT.interrupt();
-        flST.interrupt();
-        socket.close();
     }
 
     /**

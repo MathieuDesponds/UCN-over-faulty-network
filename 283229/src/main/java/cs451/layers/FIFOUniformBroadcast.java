@@ -13,8 +13,6 @@ public class FIFOUniformBroadcast extends Layer {
     private ConcurrentHashMap<Integer,TreeSet<BroadcastMessage>> pending;
     private ConcurrentLinkedDeque<BroadcastMessage> mToDeliver;
 
-    Thread fifoDT;
-
     public FIFOUniformBroadcast(Layer topLayer, Parser parser){
 
         waitingFor = new int [parser.NUMBER_OF_HOSTS+1];
@@ -33,9 +31,7 @@ public class FIFOUniformBroadcast extends Layer {
             }));
         }
         mToDeliver = new ConcurrentLinkedDeque<>();
-        fifoDT = new Thread(new FIFOUBDeliveringThread());
-        fifoDT.setDaemon(true);
-        fifoDT.start();
+        addThread(new Thread(new FIFOUBDeliveringThread()));
 
         Layer downLayer = new UniformReliableBroadcast(this, parser);
         super.setDownLayer(downLayer);

@@ -17,7 +17,6 @@ public class MessageGrouper extends Layer {
     List<Packet> pktByDst;
     ConcurrentLinkedDeque<BroadcastMessage> mToSend;
 
-    Thread batchT;
 
     public MessageGrouper(Layer topLayer, Parser parser) {
 
@@ -30,8 +29,7 @@ public class MessageGrouper extends Layer {
         //Init the buffer to the other hosts
         for(Host h :parser.hosts())
             initPkt(h.getId());
-        batchT = new Thread(new BatchingThread());
-        batchT.setDaemon(true); batchT.start();
+        addThread(new Thread(new BatchingThread()));
         setTopLayer(topLayer);
         setDownLayer(new PerfectLink(this, parser));
     }
