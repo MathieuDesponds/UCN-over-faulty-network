@@ -12,6 +12,7 @@ public class Packet extends Message {
     private int srcID;
     private int dstID;
     private ConcurrentLinkedDeque<BroadcastMessage> brcMessages;
+    private int byteSize = 0;
 
     private transient long timeCreated;
 
@@ -71,6 +72,7 @@ public class Packet extends Message {
 
     public void addBM(BroadcastMessage bm){
         brcMessages.addLast(bm);
+        byteSize += bm.getByteSize();
     }
 
     @Override
@@ -100,20 +102,17 @@ public class Packet extends Message {
                 '}';
     }
     public byte[] serializeToBytes() {
-        int totalSize, gt1;
-        gt1 = getSize();
+        int totalSize;
         if(mt == MessageType.ACK) {
             totalSize = 13;
             return ByteBuffer.allocate(totalSize).putInt(seqNumber).putInt(srcID).putInt(dstID).put((byte)mt.ordinal()).array();
         }else {
-            totalSize = 17 + 8 * getSize();//28+8*brc.length
-            //totalSize = 33 + 8 * getSize();
-            ByteBuffer bb = ByteBuffer.allocate(totalSize).putInt(seqNumber).putInt(srcID).putInt(dstID).put((byte) mt.ordinal())
-                    .putInt(getSize());
+            totalSize = 17 + byteSize;//28+8*brc.length
+            ByteBuffer bb = ByteBuffer.allocate(totalSize)
+                    .putInt(seqNumber).putInt(srcID).putInt(dstID).put((byte) mt.ordinal()).putInt(getSize());
             for (BroadcastMessage bm : brcMessages) {
-                bb.put(bm.serializeToBytes());
+                bb.put(bm.getBytes());
             }
-            assert gt1 == getSize();
             return bb.array();
         }
     }
@@ -126,8 +125,11 @@ public class Packet extends Message {
         Packet pkt =  new Packet(seqNumber, srcID,dstID, mt, -1,-1);
         if(mt == MessageType.MESSAGE) {
             int size = intFromByteArray(data, 13);
+            int startPoint = 17;
             for (int i = 0; i < size; i++) {
-                pkt.addBM(BroadcastMessage.deserializeFromBytes(data, 17 + 8 * i));
+                BroadcastMessage bm = BroadcastMessage.deserializeFromBytes(data, startPoint);
+                startPoint += bm.getByteSize();
+                pkt.addBM(bm);
             }
         }
         return pkt;

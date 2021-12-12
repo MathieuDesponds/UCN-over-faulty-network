@@ -1,17 +1,30 @@
 package cs451.Messages;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Objects;
 
 public class BroadcastMessage extends Message {
     private int broadcasterID;
     private String payload;
     private transient int dstId;
+    private byte [] bytes;
+    private int byteSize;
 
+    public BroadcastMessage(int seqNumber, int broadcasterID, String payload, int byteSize) {
+        super(seqNumber);
+        this.broadcasterID = broadcasterID;
+        this.payload = payload;
+        this.bytes = null;
+        this.byteSize = byteSize;
+    }
     public BroadcastMessage(int seqNumber, int broadcasterID, String payload) {
         super(seqNumber);
         this.broadcasterID = broadcasterID;
         this.payload = payload;
+        bytes = serializeToBytes();
+        byteSize = bytes.length;
     }
 
     public BroadcastMessage(int seqNumber, String payload) {
@@ -25,6 +38,8 @@ public class BroadcastMessage extends Message {
         this.dstId = dstId;
     }
 
+
+
     public int getDstId() {
         return dstId;
     }
@@ -37,6 +52,13 @@ public class BroadcastMessage extends Message {
         this.broadcasterID = broadcasterID;
     }
 
+    public int getByteSize(){
+        return byteSize;
+    }
+
+    public byte[] getBytes() {
+        return bytes;
+    }
 
     @Override
     public int hashCode() {
@@ -57,20 +79,26 @@ public class BroadcastMessage extends Message {
         return "BM {" +
                 "brdID=" + broadcasterID +
                 ", seqNumber=" + seqNumber +
+                ", payload=" + payload +
                 '}';
     }
     public byte[] serializeToBytes() {
-        //byte[] payloadByte = payload.getBytes();
-        //byte[] bytes = ByteBuffer.allocate(8+payloadByte.length).putInt(seqNumber).putInt(broadcasterID)
-        //        .put(payload.getBytes()).array();
-        byte[] bytes = ByteBuffer.allocate(8).putInt(seqNumber).putInt(broadcasterID).array();
-        return bytes;
+        byte[] payloadByte = payload.getBytes();
+        ByteBuffer bb = ByteBuffer.allocate(12+payloadByte.length).putInt(seqNumber).putInt(broadcasterID).putInt(payloadByte.length);
+        if(payloadByte.length != 0)
+            bb.put(payloadByte);
+        return bb.array();
     }
 
     public static BroadcastMessage deserializeFromBytes(byte[] data, int startPoint) {
         int seqNumber = intFromByteArray(data,startPoint);
         int broadcasterID = intFromByteArray(data, startPoint+4);
-        String payload = ""; //new String(Arrays.copyOfRange(data,startPoint+ 8, startPoint+data.length), StandardCharsets.UTF_8);
-        return new BroadcastMessage(seqNumber, broadcasterID, payload);
+        int payloadSize = intFromByteArray(data, startPoint+8);
+        String payload;
+        if(payloadSize == 0)
+            payload = "";
+        else
+            payload =  new String(Arrays.copyOfRange(data,startPoint+ 12, startPoint+12+payloadSize), StandardCharsets.UTF_8);
+        return new BroadcastMessage(seqNumber, broadcasterID, payload, 12+payloadSize);
     }
 }
