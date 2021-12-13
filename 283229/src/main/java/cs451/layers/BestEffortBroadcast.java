@@ -2,6 +2,7 @@ package cs451.layers;
 
 import cs451.Host;
 import cs451.Messages.BroadcastMessage;
+import cs451.Messages.BroadcastMessageSent;
 import cs451.Messages.Message;
 import cs451.Parsing.Parser;
 
@@ -31,7 +32,7 @@ public class BestEffortBroadcast extends Layer {
     public <BM extends Message> void  sentFromTop(BM m) {
         BroadcastMessage bm = (BroadcastMessage) m;
         for (Host h : hosts) {
-            downLayer.sentFromTop(new BroadcastMessage(bm,h.getId()));
+            downLayer.sentFromTop(new BroadcastMessageSent(bm,h.getId()));
         }
         if(bm.getBroadcasterID() == MY_ID)
             topLayer.deliveredFromBottom(bm);

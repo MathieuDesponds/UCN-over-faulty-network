@@ -2,6 +2,7 @@ package cs451.layers;
 
 import cs451.Host;
 import cs451.Messages.BroadcastMessage;
+import cs451.Messages.BroadcastMessageSent;
 import cs451.Messages.Message;
 import cs451.Messages.Packet;
 import cs451.Parsing.Parser;
@@ -15,7 +16,7 @@ public class MessageGrouper extends Layer {
     private final int MAX_M_BY_PKT = 2000;
     private final int NAGLE_TIMEOUT = 200; //ms
     List<Packet> pktByDst;
-    ConcurrentLinkedDeque<BroadcastMessage> mToSend;
+    ConcurrentLinkedDeque<BroadcastMessageSent> mToSend;
 
 
     public MessageGrouper(Layer topLayer, Parser parser) {
@@ -43,8 +44,8 @@ public class MessageGrouper extends Layer {
     }
 
     @Override
-    public <BM extends Message> void sentFromTop(BM m) {
-        BroadcastMessage bm = (BroadcastMessage) m;
+    public <BMS extends Message> void sentFromTop(BMS m) {
+        BroadcastMessageSent bm = (BroadcastMessageSent) m;
         mToSend.addLast(bm);
 
     }
@@ -61,7 +62,7 @@ public class MessageGrouper extends Layer {
             lastCheck = System.currentTimeMillis();
             while(true){
                 while(!mToSend.isEmpty()){
-                    BroadcastMessage bm = mToSend.pollFirst();
+                    BroadcastMessageSent bm = mToSend.pollFirst();
                     Packet pkt = pktByDst.get(bm.getDstId());
                     pkt.addBM(bm);
                     if(pkt.getSize() == MAX_M_BY_PKT){
