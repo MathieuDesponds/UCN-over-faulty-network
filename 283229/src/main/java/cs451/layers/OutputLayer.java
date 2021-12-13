@@ -16,7 +16,7 @@ public class OutputLayer extends Layer{
     public OutputLayer(Layer topLayer, Parser parser){
         this.path = parser.output();
         sToWrite = new ConcurrentLinkedDeque<>();
-        Layer downLayer = new FIFOUniformBroadcast(this, parser);
+        Layer downLayer = new LCausalBroadcast(this, parser);
         super.setDownLayer(downLayer);
         super.setTopLayer(topLayer);
         addThread(new Thread(new OLStringBuilderThread()));

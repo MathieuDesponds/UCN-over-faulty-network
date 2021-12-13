@@ -11,6 +11,8 @@ public class BroadcastMessage extends Message {
     private transient int dstId;
     private byte [] bytes;
     private int byteSize;
+    private int[] vc;
+    private long sumVC;
 
     public BroadcastMessage(int seqNumber, int broadcasterID, String payload, int byteSize) {
         super(seqNumber);
@@ -58,6 +60,21 @@ public class BroadcastMessage extends Message {
 
     public byte[] getBytes() {
         return bytes;
+    }
+
+    public void addVC(int[] vc) {
+        this.vc = Arrays.copyOf(vc,vc.length);
+        for(int i= 0; i<vc.length; i++){
+            sumVC += vc[i];
+        }
+    }
+
+    public int[] getVC() {
+        return vc;
+    }
+
+    public long getSumVC() {
+        return sumVC;
     }
 
     @Override

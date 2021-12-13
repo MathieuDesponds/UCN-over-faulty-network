@@ -52,10 +52,13 @@ public class Parser {
             help();
         }
 
-        if (!configParser.populate(args[Constants.CONFIG_VALUE])) {
+        MY_ID = myId();
+        NUMBER_OF_HOSTS = hosts().size();
+        ME = getHostWithId(myId());
+
+        if (!configParser.populate(args[Constants.CONFIG_VALUE], NUMBER_OF_HOSTS)) {
             help();
         }
-
         MY_ID = myId();
         NUMBER_OF_HOSTS = hosts().size();
         ME = getHostWithId(myId());
