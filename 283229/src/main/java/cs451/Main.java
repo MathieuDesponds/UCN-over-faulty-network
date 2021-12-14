@@ -33,9 +33,6 @@ public class Main {
         parser = new Parser(args);
         parser.parse();
         initSignalHandlers();
-
-        layer = new OutputLayer(null, parser);
-
         // example
         long pid = ProcessHandle.current().pid();
         System.out.println("My PID: " + pid + "\n");
@@ -61,6 +58,7 @@ public class Main {
 
         System.out.println("Doing some initialization\n");
 
+        layer = new OutputLayer(null, parser);
         List<BroadcastMessage> lm = instantiateMessages();
 
         System.out.println("Broadcasting and delivering messages...\n");

@@ -48,6 +48,13 @@ public class OutputLayer extends Layer{
         }
 
     }
+
+    @Override
+    public void close(){
+        super.close();
+        write();
+    }
+
     private class OLStringBuilderThread implements Runnable{
         @Override
         public void run() {

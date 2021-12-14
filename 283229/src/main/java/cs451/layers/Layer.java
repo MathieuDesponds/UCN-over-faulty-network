@@ -34,7 +34,7 @@ public abstract class Layer {
         t.setDaemon(true); t.start();
         myThreads.add(t);
     }
-    public final void close(){
+    public void close(){
         closed = true;
         for(Thread t : myThreads)
             t.interrupt();

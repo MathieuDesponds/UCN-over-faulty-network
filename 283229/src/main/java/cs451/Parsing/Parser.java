@@ -59,9 +59,6 @@ public class Parser {
         if (!configParser.populate(args[Constants.CONFIG_VALUE], NUMBER_OF_HOSTS)) {
             help();
         }
-        MY_ID = myId();
-        NUMBER_OF_HOSTS = hosts().size();
-        ME = getHostWithId(myId());
     }
 
     private void help() {
