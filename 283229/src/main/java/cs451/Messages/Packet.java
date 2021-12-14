@@ -72,7 +72,7 @@ public class Packet extends Message {
 
     public void addBM(BroadcastMessage bm){
         brcMessages.addLast(bm);
-        byteSize += ((BroadcastMessageSent) bm).getByteSize();
+        byteSize += bm.getByteSize();
     }
 
     @Override

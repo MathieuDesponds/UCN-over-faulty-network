@@ -8,22 +8,24 @@ import cs451.Parsing.Parser;
 import java.util.concurrent.PriorityBlockingQueue;
 
 public class LCausalBroadcast extends Layer{
+    private final int [][] CAUSALITY;
     private int [] vc;
     private final int MY_ID;
     private PriorityBlockingQueue<BroadcastMessageReceived> pending;
 
     public LCausalBroadcast(Layer topLayer, Parser parser){
         MY_ID = parser.MY_ID;
+        CAUSALITY = parser.getCause();
         vc = new int [parser.NUMBER_OF_HOSTS];
         for(int i = 0 ; i < vc.length; i++){ vc[i] = 0; }
-        pending = new PriorityBlockingQueue<>(0,(BroadcastMessageReceived bm1, BroadcastMessageReceived bm2) -> {
-            long s1 = bm1.getSumVC(), s2 = bm2.getSumVC();
-            if(s1<s2)
-                return -1;
-            else if(s1 == s2)
-                return 0;
-            else
-                return 1;
+        pending = new PriorityBlockingQueue<>(1,(BroadcastMessageReceived bm1, BroadcastMessageReceived bm2) ->{
+                long s1 = bm1.getSumVC(), s2 = bm2.getSumVC();
+                if(s1<s2)
+                    return -1;
+                else if(s1 == s2)
+                    return 0;
+                else
+                    return 1;
         });
         addThread(new Thread(new LCBDeliveringThread()));
 
@@ -58,9 +60,18 @@ public class LCausalBroadcast extends Layer{
 
     @Override
     public <BM extends Message> void sentFromTop(BM m) {
-        ((BroadcastMessage) m).setVC(vc);
+
+        ((BroadcastMessage) m).setVC(causalVC());
         vc[MY_ID-1]++;
         downLayer.sentFromTop(m);
+    }
+
+    private int [] causalVC() {
+        int [] causalVC = new int[vc.length];
+        for(int i =0 ; i<vc.length; i++){
+            causalVC[i] = vc[i] * CAUSALITY[MY_ID-1][i];
+        }
+        return causalVC;
     }
 
     private class LCBDeliveringThread implements Runnable {
@@ -74,6 +85,5 @@ public class LCausalBroadcast extends Layer{
                 }
             }
         }
-
     }
 }

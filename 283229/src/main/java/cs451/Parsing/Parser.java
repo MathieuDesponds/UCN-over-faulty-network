@@ -97,6 +97,10 @@ public class Parser {
         return null;
     }
 
+    public int [][] getCause(){
+        return configParser.getCause();
+    }
+
     public Host getME() {
         return ME;
     }

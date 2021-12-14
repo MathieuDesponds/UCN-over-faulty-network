@@ -8,12 +8,16 @@ public class BroadcastMessage extends Message {
     protected int broadcasterID;
     protected String payload;
     protected int[] vc;
+    protected int byteSize;
 
     public BroadcastMessage(int seqNumber, int broadcasterID, String payload, int [] vc) {
         super(seqNumber);
         this.broadcasterID = broadcasterID;
         this.payload = payload;
-        this.vc = Arrays.copyOf(vc,vc.length);
+        if(vc != null) {
+            this.vc = Arrays.copyOf(vc, vc.length);
+            this.byteSize = 13 + payload.getBytes().length + vc.length * 4;
+        }
     }
 
     public BroadcastMessage(int seqNumber, String payload) { //used in the main
@@ -40,6 +44,10 @@ public class BroadcastMessage extends Message {
         this.vc = Arrays.copyOf(vc,vc.length);
     }
 
+    public int getByteSize() {
+        return byteSize;
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(broadcasterID, seqNumber);
@@ -56,11 +64,16 @@ public class BroadcastMessage extends Message {
 
     @Override
     public String toString() {
-        return "BM {" +
+        String s =  "BM {" +
                 "brdID=" + broadcasterID +
                 ", seqNumber=" + seqNumber +
-                ", payload=" + payload +
-                '}';
+                ", payload=" + payload+
+                ", vc= [";
+        for(int i = 0 ; i<vc.length; i++){
+            s+= vc[i]+", ";
+        }
+        s+="] }";
+        return s;
     }
 
 
@@ -81,6 +94,6 @@ public class BroadcastMessage extends Message {
         for(int i = 0 ; i<vcSize; i++){
             vc[i] = intFromByteArray(data,current); current +=4;
         }
-        return new BroadcastMessageReceived(seqNumber, broadcasterID, payload, vc, current-startPoint);
+        return new BroadcastMessageReceived(seqNumber, broadcasterID, payload, vc);
     }
 }

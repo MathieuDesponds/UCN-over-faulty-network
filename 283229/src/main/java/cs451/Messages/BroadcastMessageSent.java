@@ -5,21 +5,15 @@ import java.nio.ByteBuffer;
 public class BroadcastMessageSent extends BroadcastMessage{
     private int dstId; //only when sent
     private byte [] bytes;//only when sent
-    private int byteSize; //Only when sent
 
     public BroadcastMessageSent(BroadcastMessage bm, int dstId) {
         super(bm.getSeqNumber(), bm.getBroadcasterID(), bm.getPayload(), bm.getVC());
         this.dstId = dstId;
         bytes = serializeToBytes();
-        byteSize = bytes.length;
     }
 
     public int getDstId() {
         return dstId;
-    }
-
-    public int getByteSize(){
-        return byteSize;
     }
 
     public byte[] getBytes() {
@@ -28,9 +22,8 @@ public class BroadcastMessageSent extends BroadcastMessage{
 
     public byte[] serializeToBytes() {
         byte[] payloadByte = payload.getBytes();
-        int size = 12+payloadByte.length + vc.length*4;
 
-        ByteBuffer bb = ByteBuffer.allocate(12+payloadByte.length).putInt(seqNumber).putInt(broadcasterID).putInt(payloadByte.length);
+        ByteBuffer bb = ByteBuffer.allocate(byteSize).putInt(seqNumber).putInt(broadcasterID).putInt(payloadByte.length);
         if(payloadByte.length != 0)
             bb.put(payloadByte);
         bb.put((byte)vc.length);
