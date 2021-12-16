@@ -6,6 +6,7 @@ import cs451.Messages.BroadcastMessageSent;
 import cs451.Messages.Message;
 import cs451.Parsing.Parser;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class BestEffortBroadcast extends Layer {
@@ -16,7 +17,7 @@ public class BestEffortBroadcast extends Layer {
         MY_ID = parser.myId();
         Host me = parser.getHostWithId(MY_ID);
 
-        hosts = parser.hosts();
+        hosts = new ArrayList<>(parser.hosts());
         hosts.remove(me);
 
         setTopLayer(topLayer);

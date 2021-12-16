@@ -5,31 +5,36 @@ import cs451.Messages.BroadcastMessageReceived;
 import cs451.Messages.Message;
 import cs451.Parsing.Parser;
 
-import java.util.Iterator;
-import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class LCausalBroadcast extends Layer{
     private final int [][] CAUSALITY;
     private int [] vc;
     private int lsb;
     private final int MY_ID;
-    private PriorityBlockingQueue<BroadcastMessageReceived> pending;
+    private final int NUMBER_OF_HOSTS;
+    private ConcurrentHashMap<Integer, ConcurrentSkipListSet<BroadcastMessage>> pending;
 
     public LCausalBroadcast(Layer topLayer, Parser parser){
+        NUMBER_OF_HOSTS = parser.NUMBER_OF_HOSTS;
         MY_ID = parser.MY_ID;
         CAUSALITY = parser.getCause();
         lsb = 0;
-        vc = new int [parser.NUMBER_OF_HOSTS];
+        vc = new int [NUMBER_OF_HOSTS];
         for(int i = 0 ; i < vc.length; i++){ vc[i] = 0; }
-        pending = new PriorityBlockingQueue<>(1,(BroadcastMessageReceived bm1, BroadcastMessageReceived bm2) ->{
-                long s1 = bm1.getSumVC(), s2 = bm2.getSumVC();
-                if(s1<s2)
+        pending = new ConcurrentHashMap<>();
+        for(int i = 0 ; i < NUMBER_OF_HOSTS; i++){
+            pending.put(i+1, new ConcurrentSkipListSet<>((BroadcastMessage bm1, BroadcastMessage bm2) -> {
+                if(bm1.getSeqNumber()<bm2.getSeqNumber())
                     return -1;
-                else if(s1 == s2)
+                else if(bm1.getSeqNumber()==bm2.getSeqNumber())
                     return 0;
                 else
                     return 1;
-        });
+            }));
+        }
+
         addThread(new Thread(new LCBDeliveringThread()));
 
         Layer downLayer = new UniformReliableBroadcast(this, parser);
@@ -44,18 +49,16 @@ public class LCausalBroadcast extends Layer{
                 return false;
             }
         }
-        vc[bm.getBroadcasterID() - 1]++;
+        vc[bim- 1]++;
         topLayer.deliveredFromBottom(bm);
-        pending.remove(bm);
+        pending.get(bim).pollFirst();
         return true;
     }
 
     @Override
     public <BM extends Message> void deliveredFromBottom(BM m) {
         BroadcastMessageReceived bm = (BroadcastMessageReceived)m;
-        if(!deliverVCIfPossible(bm)) {
-            pending.put(bm);
-        }
+        pending.get(bm.getBroadcasterID()).add(bm);
     }
 
     @Override
@@ -77,15 +80,9 @@ public class LCausalBroadcast extends Layer{
         @Override
         public void run() {
             while(!closed){
-                while(!pending.isEmpty()) {
-//                    for(BroadcastMessage bm : pending) {
-//                        deliverVCIfPossible(bm);
-//                    }
-                    Iterator<BroadcastMessageReceived> iter = pending.iterator();
-                    while(iter.hasNext()) {
-                        if(deliverVCIfPossible(iter.next()))
-                            iter.remove();
-                    }
+                for(int i = 0; i< NUMBER_OF_HOSTS; i++){
+                    while(!pending.get(i+1).isEmpty() &&
+                            deliverVCIfPossible(pending.get(i+1).first()));
                 }
             }
         }
