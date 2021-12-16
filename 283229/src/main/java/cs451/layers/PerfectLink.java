@@ -35,12 +35,12 @@ public class PerfectLink extends Layer{
     public PerfectLink(Layer topLayer,  Parser parser) {
         mReceived = new HashSet<>();
 
-        this.NUMBER_OF_HOSTS = parser.hosts().size();
-        waitingFor = new int[NUMBER_OF_HOSTS + 2];
-        estimatedRTT = new int[NUMBER_OF_HOSTS + 2];
-        deviationRTT = new int[NUMBER_OF_HOSTS + 2];
-        timeoutInterval = new int[NUMBER_OF_HOSTS + 2];
-        nextTimeOut = new long[NUMBER_OF_HOSTS + 2];
+        this.NUMBER_OF_HOSTS = parser.NUMBER_OF_HOSTS;
+        waitingFor = new int[NUMBER_OF_HOSTS + 1];
+        estimatedRTT = new int[NUMBER_OF_HOSTS + 1];
+        deviationRTT = new int[NUMBER_OF_HOSTS + 1];
+        timeoutInterval = new int[NUMBER_OF_HOSTS + 1];
+        nextTimeOut = new long[NUMBER_OF_HOSTS + 1];
         for (int i = 0; i < waitingFor.length; i++) {
             waitingFor[i] = 1;
             estimatedRTT[i] = ESTIMATED_RTT_0;

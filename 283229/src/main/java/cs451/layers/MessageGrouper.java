@@ -7,15 +7,13 @@ import cs451.Messages.Message;
 import cs451.Messages.Packet;
 import cs451.Parsing.Parser;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class MessageGrouper extends Layer {
     private int MY_ID;
     private final int MAX_M_BY_PKT = 1000;
     private final int NAGLE_TIMEOUT = 200; //ms
-    List<Packet> pktByDst;
+    Packet [] pktByDst;
     ConcurrentLinkedDeque<BroadcastMessageSent> mToSend;
 
 
@@ -23,10 +21,10 @@ public class MessageGrouper extends Layer {
 
         this.MY_ID = parser.myId();
 
-        pktByDst = new ArrayList<>();
+        pktByDst = new Packet[parser.NUMBER_OF_HOSTS+1];
         mToSend = new ConcurrentLinkedDeque<>();
         for(int i = 0; i < parser.NUMBER_OF_HOSTS+1; i++)
-            pktByDst.add(null);
+            pktByDst[i] = null;
         //Init the buffer to the other hosts
         for(Host h :parser.hosts())
             initPkt(h.getId());
@@ -51,7 +49,7 @@ public class MessageGrouper extends Layer {
     }
 
     private void initPkt(int index){
-        pktByDst.set(index,new Packet(MY_ID, index, Packet.MessageType.MESSAGE, System.currentTimeMillis()));
+        pktByDst[index] = new Packet(MY_ID, index, Packet.MessageType.MESSAGE, System.currentTimeMillis());
     }
 
     private class BatchingThread implements Runnable {
@@ -63,7 +61,7 @@ public class MessageGrouper extends Layer {
             while(true){
                 while(!mToSend.isEmpty()){
                     BroadcastMessageSent bm = mToSend.pollFirst();
-                    Packet pkt = pktByDst.get(bm.getDstId());
+                    Packet pkt = pktByDst[bm.getDstId()];
                     pkt.addBM(bm);
                     if(pkt.getSize() == MAX_M_BY_PKT){
                         initPkt(pkt.getDstID());

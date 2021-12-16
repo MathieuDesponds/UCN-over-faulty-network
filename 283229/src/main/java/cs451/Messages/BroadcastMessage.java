@@ -83,7 +83,7 @@ public class BroadcastMessage extends Message {
     }
 
 
-    public static BroadcastMessageReceived deserializeFromBytes(byte[] data, int startPoint) {
+    public static BroadcastMessage deserializeFromBytes(byte[] data, int startPoint) {
         int current = startPoint;
         int seqNumber = intFromByteArray(data,current); current +=4;
         int broadcasterID = intFromByteArray(data, current);current +=4;
@@ -104,6 +104,6 @@ public class BroadcastMessage extends Message {
                 vc[i] = -1;
             }
         }
-        return new BroadcastMessageReceived(seqNumber, broadcasterID, payload, vc);
+        return new BroadcastMessage(seqNumber, broadcasterID, payload, vc);
     }
 }

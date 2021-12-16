@@ -127,7 +127,7 @@ public class Packet extends Message {
             int size = intFromByteArray(data, 13);
             int startPoint = 17;
             for (int i = 0; i < size; i++) {
-                BroadcastMessageReceived bm = BroadcastMessage.deserializeFromBytes(data, startPoint);
+                BroadcastMessage bm = BroadcastMessage.deserializeFromBytes(data, startPoint);
                 startPoint += bm.getByteSize();
                 pkt.addBM(bm);
             }

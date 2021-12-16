@@ -1,7 +1,6 @@
 package cs451.layers;
 
 import cs451.Messages.BroadcastMessage;
-import cs451.Messages.BroadcastMessageReceived;
 import cs451.Messages.Message;
 import cs451.Parsing.Parser;
 
@@ -57,7 +56,7 @@ public class LCausalBroadcast extends Layer{
 
     @Override
     public <BM extends Message> void deliveredFromBottom(BM m) {
-        BroadcastMessageReceived bm = (BroadcastMessageReceived)m;
+        BroadcastMessage bm = (BroadcastMessage)m;
         pending.get(bm.getBroadcasterID()).add(bm);
     }
 

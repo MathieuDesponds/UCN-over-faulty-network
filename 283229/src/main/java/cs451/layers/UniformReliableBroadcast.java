@@ -4,13 +4,14 @@ import cs451.Messages.BroadcastMessage;
 import cs451.Messages.Message;
 import cs451.Parsing.Parser;
 
+import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class UniformReliableBroadcast extends Layer {
     private final int MY_ID;
     private final int NUMBER_OF_HOSTS;
     private final int MIN_NUMBER_OF_HOSTS_TO_ACK;
-    private ConcurrentHashMap<BroadcastMessage,Boolean> mDelivered;
+    private HashSet<BroadcastMessage> mDelivered;
     private ConcurrentHashMap<BroadcastMessage, Integer> mPendingToBeAcked;
 
 
@@ -19,7 +20,7 @@ public class UniformReliableBroadcast extends Layer {
         NUMBER_OF_HOSTS = parser.hosts().size();
         MIN_NUMBER_OF_HOSTS_TO_ACK = NUMBER_OF_HOSTS /2 +1;
 
-        mDelivered = new ConcurrentHashMap<>();
+        mDelivered = new HashSet<>();
         mPendingToBeAcked = new ConcurrentHashMap<>();
         Layer downLayer = new BestEffortBroadcast(this, parser);
         super.setDownLayer(downLayer);
@@ -29,7 +30,7 @@ public class UniformReliableBroadcast extends Layer {
     @Override
     public <BM extends Message> void  deliveredFromBottom(BM m) {
         BroadcastMessage bm = (BroadcastMessage) m;
-        if(!mDelivered.containsKey(bm)) {
+        if(!mDelivered.contains(bm)) {
             //We checked how many times we received this BroadcastMessage
             int count = mPendingToBeAcked.getOrDefault(bm, 0);
             if(count == 0 && bm.getBroadcasterID() != MY_ID) {
@@ -38,7 +39,7 @@ public class UniformReliableBroadcast extends Layer {
             }
             if(count+1 >= MIN_NUMBER_OF_HOSTS_TO_ACK){
                 topLayer.deliveredFromBottom(bm);
-                mDelivered.put(bm,true);
+                mDelivered.add(bm);
                 mPendingToBeAcked.remove(bm);
             }else {
                 mPendingToBeAcked.put(bm, count + 1);
