@@ -26,9 +26,8 @@ public class BroadcastMessageSent extends BroadcastMessage{
         ByteBuffer bb = ByteBuffer.allocate(byteSize).putInt(seqNumber).putInt(broadcasterID).putInt(payloadByte.length);
         if(payloadByte.length != 0)
             bb.put(payloadByte);
-        bb.put((byte)vc.length);
         for(int i = 0; i<vc.length; i++){
-            bb.putInt(vc[i]);
+            if(vc[i] >= 0) bb.putInt(vc[i]);
         }
         return bb.array();
     }

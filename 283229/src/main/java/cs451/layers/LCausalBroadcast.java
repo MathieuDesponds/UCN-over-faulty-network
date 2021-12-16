@@ -70,7 +70,7 @@ public class LCausalBroadcast extends Layer{
     private int [] causalVC() {
         int [] causalVC = new int[vc.length];
         for(int i =0 ; i<vc.length; i++){
-            causalVC[i] = CAUSALITY[MY_ID-1][i] == 1 ? vc[i] : 0;
+            causalVC[i] = CAUSALITY[MY_ID-1][i] == 1 ? vc[i] : -1;
         }
         causalVC[MY_ID-1] = lsb; lsb++;
         return causalVC;

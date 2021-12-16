@@ -78,7 +78,7 @@ public class Main {
         List<BroadcastMessage> lm = new ArrayList<BroadcastMessage>();
         int configNbMessage = parser.configNbMessage();
         for(int i = 1; i<=configNbMessage; ++i) {
-            lm.add(new BroadcastMessage(i,""));
+            lm.add(new BroadcastMessage(i,"",parser));
         }
         return lm;
     }

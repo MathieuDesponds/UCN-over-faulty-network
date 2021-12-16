@@ -1,5 +1,7 @@
 package cs451.Messages;
 
+import cs451.Parsing.Parser;
+
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Objects;
@@ -9,6 +11,7 @@ public class BroadcastMessage extends Message {
     protected String payload;
     protected int[] vc;
     protected int byteSize;
+    protected static int[][] causality;
 
     public BroadcastMessage(int seqNumber, int broadcasterID, String payload, int [] vc) {
         super(seqNumber);
@@ -20,8 +23,10 @@ public class BroadcastMessage extends Message {
         }
     }
 
-    public BroadcastMessage(int seqNumber, String payload) { //used in the main
+    public BroadcastMessage(int seqNumber, String payload, Parser parser) { //used in the main
         this(seqNumber, -1, payload, null);
+        if(causality == null) this.causality = parser.getCause();
+
     }
 
     public int getBroadcasterID() {
@@ -89,10 +94,14 @@ public class BroadcastMessage extends Message {
             payload = new String(Arrays.copyOfRange(data, current, current + payloadSize), StandardCharsets.UTF_8);
             current += payloadSize;
         }
-        byte vcSize = data[current];current ++;
-        int[] vc = new int[vcSize];
-        for(int i = 0 ; i<vcSize; i++){
-            vc[i] = intFromByteArray(data,current); current +=4;
+        int[] vc = new int[causality[0].length];
+        for(int i = 0 ; i<vc.length; i++){
+            if(causality[broadcasterID-1][i] == 1) {
+                vc[i] = intFromByteArray(data, current);
+                current += 4;
+            }else{
+                vc[i] = -1;
+            }
         }
         return new BroadcastMessageReceived(seqNumber, broadcasterID, payload, vc);
     }
