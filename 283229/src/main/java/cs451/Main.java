@@ -58,7 +58,7 @@ public class Main {
         System.out.println(parser.config() + "\n");
 
         System.out.println("Doing some initialization\n");
-
+        BroadcastMessage.setCausality(parser.getCause());
         layer = new OutputLayer(null, parser);
         List<BroadcastMessage> lm = instantiateMessages();
 
@@ -78,7 +78,7 @@ public class Main {
         List<BroadcastMessage> lm = new ArrayList<BroadcastMessage>();
         int configNbMessage = parser.configNbMessage();
         for(int i = 1; i<=configNbMessage; ++i) {
-            lm.add(new BroadcastMessage(i,"",parser));
+            lm.add(new BroadcastMessage(i,""));
         }
         return lm;
     }

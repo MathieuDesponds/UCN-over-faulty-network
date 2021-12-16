@@ -1,7 +1,5 @@
 package cs451.Messages;
 
-import cs451.Parsing.Parser;
-
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Objects;
@@ -23,10 +21,13 @@ public class BroadcastMessage extends Message {
         }
     }
 
-    public BroadcastMessage(int seqNumber, String payload, Parser parser) { //used in the main
+    public BroadcastMessage(int seqNumber, String payload) { //used in the main
         this(seqNumber, -1, payload, null);
-        if(causality == null) this.causality = parser.getCause();
 
+    }
+
+    public static void setCausality(int[][] c) {
+        causality = c;
     }
 
     public int getBroadcasterID() {
