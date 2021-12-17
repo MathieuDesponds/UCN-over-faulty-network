@@ -21,7 +21,7 @@ public class BroadcastMessageSent extends BroadcastMessage{
     }
 
     public byte[] serializeToBytes() {
-        byte[] payloadByte = payload.getBytes();
+        try{byte[] payloadByte = payload.getBytes();
 
         ByteBuffer bb = ByteBuffer.allocate(byteSize).putInt(seqNumber).putInt(broadcasterID).putInt(payloadByte.length);
         if(payloadByte.length != 0)
@@ -30,6 +30,11 @@ public class BroadcastMessageSent extends BroadcastMessage{
             if(vc[i] >= 0) bb.putInt(vc[i]);
         }
         return bb.array();
+        }catch(java.nio.BufferOverflowException e) {
+            System.err.println(toString());
+            e.printStackTrace();
+        }
+        return null;
     }
 
 }

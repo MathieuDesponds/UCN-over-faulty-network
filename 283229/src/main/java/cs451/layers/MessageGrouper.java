@@ -1,5 +1,6 @@
 package cs451.layers;
 
+import cs451.Constants;
 import cs451.Host;
 import cs451.Messages.BroadcastMessage;
 import cs451.Messages.BroadcastMessageSent;
@@ -11,7 +12,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class MessageGrouper extends Layer {
     private int MY_ID;
-    private final int MAX_M_BY_PKT = 1000;
+    private final int MAX_BYTES_BY_PKT = Constants.MAX_BYTES_PER_PKT;
     private final int NAGLE_TIMEOUT = 200; //ms
     Packet [] pktByDst;
     ConcurrentLinkedDeque<BroadcastMessageSent> mToSend;
@@ -62,16 +63,17 @@ public class MessageGrouper extends Layer {
                 while(!mToSend.isEmpty()){
                     BroadcastMessageSent bm = mToSend.pollFirst();
                     Packet pkt = pktByDst[bm.getDstId()];
-                    pkt.addBM(bm);
-                    if(pkt.getSize() == MAX_M_BY_PKT){
-                        initPkt(pkt.getDstID());
+                    if(pkt.getByteSize()+bm.getByteSize() >= MAX_BYTES_BY_PKT){
                         downLayer.sentFromTop(pkt);
+                        initPkt(pkt.getDstID());
                     }
+                    pktByDst[bm.getDstId()].addBM(bm);
                 }
                 long currentTime = System.currentTimeMillis();
                 if(currentTime-lastCheck > TIME_BETWEEN_CHECK) {
                     lastCheck=currentTime;
-                    for (Packet pkt : pktByDst) {
+                    for(int i =1 ; i<pktByDst.length; i++){
+                        Packet pkt = pktByDst[i];
                         if (pkt != null && pkt.getSize() > 0 && currentTime - pkt.getTimeCreated() > NAGLE_TIMEOUT) {
                             downLayer.sentFromTop(pkt);
                             initPkt(pkt.getDstID());

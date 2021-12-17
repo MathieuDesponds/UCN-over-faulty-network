@@ -12,7 +12,7 @@ public class Packet extends Message {
     private int srcID;
     private int dstID;
     private ConcurrentLinkedDeque<BroadcastMessage> brcMessages;
-    private int byteSize = 0;
+    private int byteSize;
     private long timeCreated;
 
     protected Packet( int seqNumber, int srcID, int dstID, MessageType mt, long timeSent, long timeCreated) {
@@ -21,10 +21,13 @@ public class Packet extends Message {
         this.dstID = dstID;
         this.mt = mt;
         this.timeSent = timeSent;
-        if(mt == MessageType.MESSAGE)
+        if(mt == MessageType.MESSAGE) {
             brcMessages = new ConcurrentLinkedDeque<>();
-        else
+            this.byteSize = 17;
+        }else{
             brcMessages = null;
+            this.byteSize = 13;
+        }
         this.timeCreated = timeCreated;
     }
     public Packet(int srcID, int dstID, MessageType mt, long timeCreated) {
@@ -66,6 +69,10 @@ public class Packet extends Message {
         return mt == MessageType.MESSAGE? brcMessages.size(): 0;
     }
 
+    public int getByteSize() {
+        return byteSize;
+    }
+
     public long getTimeCreated() {
         return timeCreated;
     }
@@ -99,22 +106,29 @@ public class Packet extends Message {
                 ", seqNumber=" + seqNumber +
                 ", mt=" + mt +
                 ", size =" + getSize() +
+                ", byteSize =" + getByteSize() +
                 '}';
     }
     public byte[] serializeToBytes() {
-        int totalSize;
-        if(mt == MessageType.ACK) {
-            totalSize = 13;
-            return ByteBuffer.allocate(totalSize).putInt(seqNumber).putInt(srcID).putInt(dstID).put((byte)mt.ordinal()).array();
-        }else {
-            totalSize = 17 + byteSize;//28+8*brc.length
-            ByteBuffer bb = ByteBuffer.allocate(totalSize)
-                    .putInt(seqNumber).putInt(srcID).putInt(dstID).put((byte) mt.ordinal()).putInt(getSize());
-            for (BroadcastMessage bm : brcMessages) {
-                bb.put(((BroadcastMessageSent) bm).getBytes());
+        try {
+            int totalSize = byteSize;
+            if (mt == MessageType.ACK) {
+                return ByteBuffer.allocate(totalSize).putInt(seqNumber).putInt(srcID).putInt(dstID).put((byte) mt.ordinal()).array();
+            } else {
+                ByteBuffer bb = ByteBuffer.allocate(totalSize)
+                        .putInt(seqNumber).putInt(srcID).putInt(dstID).put((byte) mt.ordinal()).putInt(getSize());
+                for (BroadcastMessage bm : brcMessages) {
+                    assert ((BroadcastMessageSent) bm).getBytes().length == ((BroadcastMessageSent) bm).getByteSize();
+                    bb.put(((BroadcastMessageSent) bm).getBytes());
+                }
+                return bb.array();
             }
-            return bb.array();
+        }catch(java.nio.BufferOverflowException e) {
+            System.err.println(toString());
+            e.printStackTrace();
+
         }
+        return null;
     }
 
     public static Packet deserializeFromBytes(byte[] data) {

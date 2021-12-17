@@ -10,6 +10,7 @@ public class BroadcastMessage extends Message {
     protected int[] vc;
     protected int byteSize;
     protected static int[][] causality;
+    protected static int nbHosts;
 
     public BroadcastMessage(int seqNumber, int broadcasterID, String payload, int [] vc) {
         super(seqNumber);
@@ -17,7 +18,7 @@ public class BroadcastMessage extends Message {
         this.payload = payload;
         if(vc != null) {
             this.vc = Arrays.copyOf(vc, vc.length);
-            this.byteSize = 13 + payload.getBytes().length + vc.length * 4;
+            this.byteSize = 12 + payload.getBytes().length + causality[broadcasterID-1][nbHosts] * 4;
         }
     }
 
@@ -26,7 +27,8 @@ public class BroadcastMessage extends Message {
 
     }
 
-    public static void setCausality(int[][] c) {
+    public static void setCausalityNBHosts(int[][] c, int nbH) {
+        nbHosts = nbH;
         causality = c;
     }
 
@@ -74,6 +76,7 @@ public class BroadcastMessage extends Message {
                 "brdID=" + broadcasterID +
                 ", seqNumber=" + seqNumber +
                 ", payload=" + payload+
+                ", byteSize=" + byteSize+
                 ", vc= [";
         for(int i = 0 ; i<vc.length; i++){
             s+= vc[i]+", ";
@@ -95,7 +98,7 @@ public class BroadcastMessage extends Message {
             payload = new String(Arrays.copyOfRange(data, current, current + payloadSize), StandardCharsets.UTF_8);
             current += payloadSize;
         }
-        int[] vc = new int[causality[0].length];
+        int[] vc = new int[nbHosts];
         for(int i = 0 ; i<vc.length; i++){
             if(causality[broadcasterID-1][i] == 1) {
                 vc[i] = intFromByteArray(data, current);

@@ -11,7 +11,7 @@ public class ConfigParser {
     private int [][] cause;
 
     public boolean populate(String value, int nbHosts) {
-        cause = new int [nbHosts][nbHosts];
+        cause = new int [nbHosts][nbHosts+1];
         File file = new File(value);
         path = file.getPath();
         Scanner scanner;
@@ -24,9 +24,9 @@ public class ConfigParser {
                 for(String s : ls){
                     cause[i][Integer.parseInt(s)-1] = 1;
                 }
+                cause[i][nbHosts] = ls.length;
                 i++;
             }
-
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }

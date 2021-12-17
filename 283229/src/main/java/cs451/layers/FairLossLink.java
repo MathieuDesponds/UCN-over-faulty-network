@@ -1,5 +1,6 @@
 package cs451.layers;
 
+import cs451.Constants;
 import cs451.Host;
 import cs451.Messages.Message;
 import cs451.Messages.Packet;
@@ -10,7 +11,7 @@ import java.net.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class FairLossLink extends Layer {
-    private final int MAX_SIZE_PACKET = 40960; // it is between 217 and and 1 more for the sequence number with 1 more digit
+    private final int MAX_SIZE_PACKET = Constants.MAX_BYTES_PER_PKT; // it is between 217 and and 1 more for the sequence number with 1 more digit
     private DatagramSocket socket;
     private String ip;
     private int port;

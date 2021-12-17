@@ -58,7 +58,7 @@ public class Main {
         System.out.println(parser.config() + "\n");
 
         System.out.println("Doing some initialization\n");
-        BroadcastMessage.setCausality(parser.getCause());
+        BroadcastMessage.setCausalityNBHosts(parser.getCause(),parser.NUMBER_OF_HOSTS);
         layer = new OutputLayer(null, parser);
         List<BroadcastMessage> lm = instantiateMessages();
 
